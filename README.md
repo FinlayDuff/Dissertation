@@ -17,29 +17,29 @@ Poetry is used for package management with a python version of ^3.10. Ensure tha
 `poetry install`
 
 ## Contents
-├── README.md                       # Overview of the project
-├── pyproject.toml                  # Dependencies
+├── README.md                 # Overview of the project
+├── pyproject.toml            # Dependencies
 ├── data
-│   ├── raw                         # Raw datasets
-│   ├── processed                   # Preprocessed datasets
-│   └── splits                      # Train, validation, and test splits
+│   ├── raw                   # Raw datasets
+│   ├── processed             # Preprocessed datasets
+│   └── splits                # Train, validation, and test splits
 ├── notebooks
-│   ├── exploration                 # Data exploration and initial analysis
-│   ├── baseline                    # Baseline model experiments
-│   └── complex_models              # Advanced model experiments
+│   ├── exploration           # Data exploration and initial analysis
+│   ├── baseline              # Baseline model experiments
+│   └── complex_models        # Advanced model experiments
 ├── scripts
-│   ├── data_preprocessing.py       # Data cleaning and preprocessing
-│   ├── train_baseline.py           # Training baseline models
-│   ├── evaluate.py                 # Evaluating models
-│   └── train_complex.py            # Training complex models
+│   ├── data_preprocessing.py # Data cleaning and preprocessing
+│   ├── train_baseline.py     # Training baseline models
+│   ├── evaluate.py           # Evaluating models
+│   └── train_complex.py      # Training complex models
 ├── models
-│   ├── baseline                    # Saved baseline models
-│   └── complex                     # Saved advanced models
+│   ├── baseline              # Saved baseline models
+│   └── complex               # Saved advanced models
 ├── results
-│   ├── baseline                    # Results from baseline models
-│   └── complex                     # Results from complex models
+│   ├── baseline              # Results from baseline models
+│   └── complex               # Results from complex models
 ├── logs
-│   ├── training_logs               # Logs from model training sessions
-│   └── evaluation_logs             # Logs from model evaluations
+│   ├── training_logs         # Logs from model training sessions
+│   └── evaluation_logs       # Logs from model evaluations
 └── config
-    └── config.yaml                 # Configuration files for experiments
+    └── config.yaml           # Configuration files for experiments
