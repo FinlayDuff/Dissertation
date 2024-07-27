@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "dissertation"
+version = "0.1.0"
+description = "Dissertation Environment on the application of LLMs to the detection of fake news"
+authors = ["Finlay Duff <f.duff@outlook.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.36.0"
+langchainhub = "^0.1.20"
+langgraph = "^0.1.8"
+langchain-google-genai = "^1.0.7"
+langchain-openai = "^0.1.16"
+langchain = "^0.2.7"
+ipykernel = "^6.29.5"
+langchain-community = "^0.2.7"
+dotenv = "^0.0.5"
+bs4 = "^0.0.2"
+chromadb = "^0.5.4"
+langchain-anthropic = "^0.1.20"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
