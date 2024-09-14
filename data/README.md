@@ -1,0 +1,5 @@
+# Datasets
+## 1. FA-KES
+>We have produced a labeled dataset that presents fake news surrounding the conflict in Syria. The dataset consists of a set of articles/news labeled by 0 (fake) or 1 (credible). Credibility of articles are computed with respect to a ground truth information obtained from the Syrian Violations Documentation Center  (VDC). In particular, for each article, we crowdsource the information extraction (e.g., date, location, Number of casualties) job using the crowdsourcing platform Figure Eight (formally CrowdFlower). Then, we match those articles against the VDC database to be able to deduce whether an article is fake or not. The dataset can be used to train machine learning models to detect fake news. 
+
+The dataset can be accessed [here](https://zenodo.org/records/2607278)

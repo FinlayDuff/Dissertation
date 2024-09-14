@@ -1,0 +1,14 @@
+# config.yml
+datasets:
+  - name: "FA-KES"
+    description: "FA-KES news dataset of misinformation during the Syrian War"
+    path: "/data/transformed/FA-KES.csv"
+    input_keys:
+      - unit_id
+      - article_title
+      - article_content
+      - source
+      - date
+      - location
+    output_keys:
+      - label

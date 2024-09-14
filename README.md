@@ -10,13 +10,18 @@ In my dissertation, I investigate a model-in-the-loop approach utilising Large L
 ## Installation Instructions
 Poetry is used for package management with a python version of ^3.10. Ensure that your environment is pointing at a version of python compatible with the Poetry project. 
 
-*Install poetry:*
-`pip install poetry`
+__Install poetry:__
+```bash
+pip install poetry
+```
 
-*Install dependencies:*
-`poetry install`
+__Install dependencies:__
+```bash
+poetry install
+```
 
 ## Contents
+```bash
 ├── README.md                 # Overview of the project
 ├── pyproject.toml            # Dependencies
 ├── data
@@ -43,3 +48,4 @@ Poetry is used for package management with a python version of ^3.10. Ensure tha
 │   └── evaluation_logs       # Logs from model evaluations
 └── config
     └── config.yaml           # Configuration files for experiments
+```
