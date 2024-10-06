@@ -6,3 +6,5 @@ transform_raw_datasets:
 
 upload_langsmith_dataset:
 	poetry run python -m scripts.langsmith_dataset_upload
+
+setup_datasets: transform_raw_datasets upload_langsmith_dataset

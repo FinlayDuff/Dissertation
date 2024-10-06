@@ -9,12 +9,16 @@ def upload_dataset(dataset_info, dataset_manager):
 
     name = dataset_info["name"]
     path = dataset_info["path"]
+    row_count = dataset_info.get("row_count")
 
     dataset_path = os.getcwd() + path
 
     # Load the dataset
     print(f"Loading dataset {name} into memory")
     df = load_csv_as_dataframe(dataset_path)
+
+    if row_count:
+        df = df.iloc[: int(row_count)]
 
     # Uploading dataset to Langsmith
     print(f"Uploading dataset {name} into LangSmith")
