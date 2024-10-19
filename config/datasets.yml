@@ -24,4 +24,4 @@ datasets:
       - location
     output_keys:
       - label
-    row_count: 10
+    row_count: 100
