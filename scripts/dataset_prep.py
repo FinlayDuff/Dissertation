@@ -7,8 +7,8 @@ misinformation_dict = {True: "Fake", False: "Credible"}
 def transform_fakes_dataset(dataset_path):
     transformed_path = os.getcwd() + "/data/transformed/"
     df = load_csv_as_dataframe(dataset_path)
-    df["label"] = df["labels"].apply(lambda x: misinformation_dict[not bool(x)])
-    df.to_csv(transformed_path + "FA-KES.csv")
+    df["label"] = df["labels"]  # .apply(lambda x: misinformation_dict[not bool(x)])
+    df.to_csv(transformed_path + "FA-KES.csv", index=False)
 
 
 def transform_datasets():

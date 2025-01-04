@@ -2,6 +2,29 @@ import os
 from utils.data.csv_parsing import load_csv_as_dataframe
 from utils.data.langsmith_dataset import LangsmithDatasetManager
 from utils.utils import load_config
+import pandas as pd
+
+
+def balance_dataset_to_row_count(df, label_column, row_count):
+    # Calculate rows per label
+    unique_labels = df[label_column].nunique()
+    rows_per_label = row_count // unique_labels
+
+    # Sample rows_per_label rows from each label
+    balanced_df = (
+        df.groupby(label_column)
+        .apply(lambda x: x.sample(n=rows_per_label, random_state=42))
+        .reset_index(drop=True)
+    )
+
+    # Handle cases where exact row_count isn't possible due to uneven division
+    if len(balanced_df) < row_count:
+        # Sample additional rows to meet row_count
+        extra_needed = row_count - len(balanced_df)
+        extra_samples = df.sample(n=extra_needed, random_state=42)
+        balanced_df = pd.concat([balanced_df, extra_samples]).reset_index(drop=True)
+
+    return balanced_df
 
 
 # Function to load a dataset based on the config
@@ -18,7 +41,9 @@ def upload_dataset(dataset_info, dataset_manager):
     df = load_csv_as_dataframe(dataset_path)
 
     if row_count:
-        df = df.iloc[: int(row_count)]
+        # Balance the dataset to the desired row count
+        print(f"Balancing dataset {name} to {row_count} rows")
+        df = balance_dataset_to_row_count(df, "label", row_count)
 
     # Uploading dataset to Langsmith
     print(f"Uploading dataset {name} into LangSmith")

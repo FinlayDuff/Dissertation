@@ -1,14 +1,22 @@
 PROMPTS = {
-    "naive_zero_shot_classification": """
-        You are a fact-checking expert tasked with evaluating the accuracy of the following article.
-        If the article is factually accurate and well-supported by credible evidence, respond with "Credible". If the article contains any misleading, incorrect, or unverified information, respond with "Fake". In both cases, provide a detailed explanation, citing specific reasons or sources where necessary.
+    "direct_naive_zero_shot_classification": """
+        You are a helpful and unbiased news verification assistant. 
+        You will be provided with the title and the full body of text of a news article.
+        If you believe the article constitutes misinformation then output "0" and if you believe the article to be credible then output "1".
+        In both cases, provide a confidence score to your classification between 0 and 1, where 0 indicates absolutely no confidence in your classification and 1 certainty in your classification, 0.5 represents an "informed guess". Your confidence should sit somewhere in this range.
+        In both cases, provide a detailed explanation, citing specific reasons or sources where necessary.
     """,
-    "robust_zero_shot_classification": """
+    "direct_robust_zero_shot_classification": """
         You are a fact-checking expert tasked with evaluating the accuracy of the following news article. Assess the article based on its alignment with verified facts from reputable sources, including government reports, scientific studies, or established news organizations.
-        If the article is factually accurate and well-supported by credible evidence, respond with "Credible". If the article contains any misleading, incorrect, or unverified information, respond with "Fake". In both cases, provide a detailed explanation, citing specific reasons or sources where necessary.
+        If the article is factually accurate and well-supported by credible evidence, respond with "1". If the article contains any misleading, incorrect, or unverified information, respond with "0".
+        In both cases, provide a confidence score to your classification between 0 and 1, where 0 indicates absolutely no confidence in your classification and 1 certainty in your classification, 0.5 represents an "informed guess". Your confidence should sit somewhere in this range.
+        In both cases, provide a detailed explanation, citing specific reasons or sources where necessary.
     """,
-    "few_shot_classification": """
-        You are a fact-checking expert tasked with evaluating the accuracy of the following article. Evaluate its accuracy based on the evidence provided and respond with either "Credible" or "Fake".
+    "direct_few_shot_classification": """
+        You are a fact-checking expert tasked with evaluating the accuracy of the following article.
+        If the article is factually accurate and well-supported by credible evidence, respond with "1". If the article contains any misleading, incorrect, or unverified information, respond with "0".
+       In both cases, provide a confidence score to your classification between 0 and 1, where 0 indicates absolutely no confidence in your classification and 1 certainty in your classification, 0.5 represents an "informed guess". Your confidence should sit somewhere in this range.
+        In both cases, provide a detailed explanation, citing specific reasons or sources where necessary.
         
         Here are some examples:
 
@@ -46,7 +54,7 @@ PROMPTS = {
     "credibility_signals": {
         "evidence": "Does this text fail to present any supporting evidence or arguments to substantiate its claims?",
         "bias": "Does this text contain explicit or implicit biases, such as confirmation bias, selection bias, or framing bias?",
-        "inference": "Does this text make claims about correlation and causation without sufficient justification?",
+        "inference": "Does this text make claims about correlation and causation?",
         "polarising_language": "Does this text use polarising terms or create divisions into sharply contrasting groups, opinions, or beliefs?",
         "document_citation": "Does this text lack citations of studies or documents to support its claims?",
         "informal_tone": "Does this text use informal tone elements like all caps, consecutive exclamation marks, or question marks?",
@@ -54,14 +62,43 @@ PROMPTS = {
         "personal_perspective": "Does this text include the author’s personal opinions rather than factual reporting?",
         "emotional_valence": "Does the language of this text carry strong emotional valence, either predominantly negative or positive, rather than being neutral?",
         "call_to_action": "Does this text contain language that can be interpreted as a call to action, telling readers what to do or follow through with a specific task?",
+        "expert_citation": "Does this text lack citations of experts in the subject?",
+        "clickbait": "Does this text's title contain sensationalised or misleading headlines to attract clicks?",
+        "incorrect_spelling": "Does this text contain significant misspellings and/or grammatical errors?",
+        "misleading_about_content": "Does this text's title emphasise different information than the body topic?",
+        "incivility": "Does this text use stereotypes and/or generalisations of groups of people?",
+        "impoliteness": "Does this text contain insults, name-calling, or profanity?",
+        "sensationalism": "Does this text present information in a manner designed to evoke strong emotional reactions?",
+        "source_credibility": "Does this text cite low-credibility sources?",
+        "reported_by_other_sources": "Does this text present a story that was not reported by other reputable media outlets?",
     },
 }
-STRUCTURED_OUTPUT_PROMPT = """
+STRUCTURED_OUTPUT_PROMPT_ARTICLE = """
         Your output should follow this format:
-        Label: <Credible|Fake>
-        Explanation: Provide a structured explanation, specifying which parts of the article are accurate or misleading and why, along with any relevant sources or reasoning.
+        Label: <0|1>
+        Confidence:  <Float in range (0,1)>.
+        Explanation: <Explanation>
     """
+
+STRUCTURED_OUTPUT_PROMPT_SIGNAL = """
+        Your output should follow this format:
+        Credibility Signal: <signal_name>
+        Label: <0|1>
+        Confidence:  <Float in range (0,1)>.
+        Explanation: <Explanation>
+    """
+
+CREDIBILITY_SIGNALS_CLASSIFCIATION = """
+    You are a helpful and unbiased news verification assistant. 
+    You will be provided with the title and the full body of text of a news article.
+    Your task is to determine the credibility signals of the article  by answering the credibility signal questions as Yes(1) or No(0).
+    Provide a confidence score to your classification between 0 and 1, where 0 indicates a complete guess and 1 indicates absolute certainty in your classification.
+    Additionally, provide an explanation for your classification.
+    Do not output any additional information.
+"""
 
 
 def get_prompt(prompt_name):
+    if not prompt_name in PROMPTS:
+        raise ValueError(f"Prompt '{prompt_name}' not found in PROMPTS.")
     return PROMPTS.get(prompt_name, None)

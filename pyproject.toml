@@ -17,6 +17,11 @@ pydantic = "^2.9.2"
 chardet = "^5.2.0"
 pandas = "^2.2.3"
 langsmith = "^0.1.125"
+transformers = "^4.47.1"
+torch = "^2.5.1"
+torchvision = "^0.20.1"
+torchaudio = "^2.5.1"
+matplotlib = "^3.10.0"
 
 
 [build-system]

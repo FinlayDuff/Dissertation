@@ -11,8 +11,12 @@ env/
 ENV/
 .venv/
 .env
+.python-version
 
 # Pytest cache
 .pytest_cache/
 
 .python-version
+
+# Ignore all JSON files with 'experiment_' prefix in any directory
+**/experiment_*.json
