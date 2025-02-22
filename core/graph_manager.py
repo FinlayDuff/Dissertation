@@ -59,8 +59,9 @@ class GraphManager:
         nodes = {
             "classify_article": self.detection_system.classify_article,
             "detect_signals": self.detection_system.detect_signals,
-            "make_critic_decision": self.detection_system.make_critic_decision,
-            "run_followup_model": self.detection_system.run_followup_model,
+            "critic_credibility_signals": self.detection_system.critic_signal_classification,
+            "run_followup_analysis": self.detection_system.run_followup_analysis,
+            # "make_critic_decision": self.detection_system.make_critic_decision,
         }
 
         # Add nodes
@@ -69,12 +70,13 @@ class GraphManager:
 
         # Fixed paths (no conditions)
         direct_edges = [
-            ("detect_signals", "classify_article"),
-            ("classify_article", "make_critic_decision"),
+            ("detect_signals", "critic_credibility_signals"),
+            # ("classify_article", "make_critic_decision"),
             (
-                "run_followup_model",
+                "run_followup_analysis",
                 "classify_article",
             ),
+            ("classify_article", END),
         ]
 
         for start, end in direct_edges:
@@ -90,15 +92,25 @@ class GraphManager:
             },
         )
 
-        # Final decision point - only place that can reach END
+        #
         self.graph_builder.add_conditional_edges(
-            "make_critic_decision",
-            self.decide_critic_path,
+            "critic_credibility_signals",
+            self.decide_signals_critic_path,
             {
-                "run_followup_model": "run_followup_model",
-                "end": END,  # Use string "end" instead of END constant
+                "classify_article": "classify_article",
+                "run_followup_analysis": "run_followup_analysis",
             },
         )
+
+        # Final decision point - only place that can reach END
+        # self.graph_builder.add_conditional_edges(
+        #     "make_critic_decision",
+        #     self.decide_critic_path,
+        #     {
+        #         "run_followup_analysis": "run_followup_analysis",
+        #         "end": END,  # Use string "end" instead of END constant
+        #     },
+        # )
 
         self.graph = self.graph_builder.compile()
 
@@ -133,54 +145,21 @@ class GraphManager:
         except Exception as e:
             print(f"Error in critic decision: {e}")
             return "end"  # Default to ending on error
-        
-    def process_credibility_signals(self, state: State) -> str:
+
+    def decide_signals_critic_path(self, state: State) -> str:
         """
-        For each credibility signal that can call a tool, call the critic to decide
-        whether a follow-up tool should be executed. If the critic indicates follow-up,
-        the method selects the appropriate pre-trained model to run (e.g. bias classifier,
-        RAG for source analysis) and updates the state accordingly.
+        Args:
+            state: Current state with article information
 
         Returns:
             str: The next node in the graph (e.g. "classify_article" after processing).
         """
-        signals = state.get("credibility_signals", {})
-        
-        # Define a mapping from signal names to their follow-up tools
-        followup_tools = {
-            "bias": self.detection_system.bias_classifier,
-            # "sources": self.detection_system.rag_tool,
-            # Add additional mappings for other signals as needed.
-        }
-        
-        for signal_name in signals:
-            # Only process signals that are flagged for review.
-            if signal_name in followup_tools:
-                if self.verbose:
-                    print(f"Evaluating credibility signal: {signal_name}")
-                
-                # The critic examines the current state for this signal.
-                # It returns an indicator (e.g. "FOLLOW_UP" or "NO_ACTION").
-                critic_decision = self.detection_system.critic(signal_name, state)
-                
-                if critic_decision == "FOLLOW_UP":
-                    if self.verbose:
-                        print(f"Critic recommends follow-up for signal: {signal_name}")
-                    # Determine the appropriate tool for the signal.
-                    followup_tool = followup_tools.get(signal_name)
-                    if followup_tool:
-                        # Run the follow-up tool; assume it updates and returns the state.
-                        state = followup_tool(state)
-                    else:
-                        if self.verbose:
-                            print(f"No follow-up tool configured for signal: {signal_name}")
-                else:
-                    if self.verbose:
-                        print(f"Critic did not recommend follow-up for signal: {signal_name}")
-        
-        if self.verbose:
-            print("Completed processing credibility signals; routing back to classification.")
-        return "classify_article"  # Route back to classification, or change as needed.
+        signals_critiques = state.get("signals_critiques")
+
+        if any(critique.get("label") for critique in signals_critiques.values()):
+            return "run_followup_analysis"
+
+        return "classify_article"
 
     def run_graph_on_example(self, example: dict) -> dict:
         """

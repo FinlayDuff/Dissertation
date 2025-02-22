@@ -20,3 +20,4 @@ ENV/
 
 # Ignore all JSON files with 'experiment_' prefix in any directory
 **/experiment_*.json
+.DS_Store

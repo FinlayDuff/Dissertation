@@ -35,10 +35,13 @@ class State(TypedDict):
     confidence: Annotated[Optional[float], "Confidence score of classification"]
     explanation: Annotated[Optional[str], "Reasoning for classification"]
     credibility_signals: Annotated[Dict[str, Any], "Detected credibility signals"]
+    signals_critiques: Annotated[
+        Dict[str, Any], "Critic's critiques of detected credibility signals"
+    ]
     critic_decision: Annotated[
         Optional[str], "Critic's decision on need for additional analysis"
     ]
     critic_explanation: Annotated[Optional[str], "Explanation of the critic's decision"]
-    followup_result: Annotated[
-        Optional[Dict[str, Any]], "Results from any followup model analysis"
+    followup_signals_analysis: Annotated[
+        Optional[Dict[str, Any]], "Results from any followup analysis on signals"
     ]

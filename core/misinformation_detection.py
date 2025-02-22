@@ -18,6 +18,7 @@ from core.llm_factory import LLMFactory
 from core.state import State
 from config.signals import CREDIBILITY_SIGNALS
 from utils.langchain.llm_model_selector import retry_on_rate_limit
+from transformers import pipeline
 
 
 class MisinformationDetection:
@@ -32,9 +33,9 @@ class MisinformationDetection:
     classification results, credibility signals, and LLM responses.
     """
 
-    def __init__(self):
+    def __init__(self, verbose: bool = False):
         """Initialize the misinformation detection system."""
-        pass
+        self.verbose = verbose
 
     @retry_on_rate_limit()
     def classify_article(self, state: State) -> State:
@@ -124,6 +125,8 @@ class MisinformationDetection:
 
         state["messages"] = [response.raw_content]
         if response.parsed_content:
+            if self.verbose:
+                print("credibility_signals parsed successfully")
             state["credibility_signals"] = response.parsed_content.get("signals", {})
         return state
 
@@ -204,15 +207,84 @@ class MisinformationDetection:
             state.update(response.parsed_content)
         return state
 
-    def run_followup_model(self, state: State):
+    def critic_signal_classification(self, state: State) -> State:
         """
-        Conditionally runs another model if the critic_decision said so.
-        """
-        if state.get("use_followup_model"):
-            from transformers import pipeline
+        Detect all credibility signals in one LLM call.
 
-            pipe = pipeline("text-classification", model="valurank/distilroberta-bias")
-            article_content = state.get("article_content", "")
-            result = pipe(article_content)
-            state["credibility_signals"]["bias"] = result
+        Args:
+            state: Current state with article information
+
+        Returns:
+            Updated state with bulk signals detection results
+        """
+        llm = LLMFactory.create_for_node("critic_signal_classification", state)
+
+        response = llm.invoke(
+            [
+                {
+                    "role": "user",
+                    "content": f"""
+                Title: {state['article_title']}
+                Content: {state['article_content']}
+            """,
+                },
+            ]
+        )
+
+        state["messages"] = [response.raw_content]
+        if response.parsed_content:
+            state["signals_critiques"] = response.parsed_content.get(
+                "signals_critiques", {}
+            )
         return state
+
+    def run_followup_analysis(self, state: State) -> State:
+        """
+        For each credibility signal that can call a tool the method selects the appropriate pre-trained model to run (e.g. bias classifier,
+        RAG for source analysis) and updates the state accordingly.
+
+        Returns:
+            str: State with updated follow-up analysis results
+        """
+        signals_critiques = state.get("signals_critiques", {})
+
+        # Define a mapping from signal names to their follow-up tools
+        followup_tools = {
+            # "bias": self.bias_classifier,
+            # "sources": self.detection_system.rag_tool,
+            # Add additional mappings for other signals as needed.
+        }
+
+        followup_results = {}
+        for signal_name in signals_critiques:
+            # Only process signals that are flagged for review
+            if (
+                signals_critiques[signal_name]["label"] == "TRUE"
+                and signal_name in followup_tools
+            ):
+                if self.verbose:
+                    print(
+                        f"Running followup analysis on credibility signal: {signal_name}"
+                    )
+
+                # Determine the appropriate tool for the signal.
+                followup_tool = followup_tools.get(signal_name)
+                if followup_tool:
+                    # Run the follow-up tool; assume it updates and returns the state.
+                    result = followup_tool(state)
+                    followup_results[signal_name] = result
+                else:
+                    if self.verbose:
+                        print(f"No follow-up tool configured for signal: {signal_name}")
+        if followup_results:
+            state["followup_signals_analysis"] = followup_results
+        return state
+
+    def bias_classifier(self, state: State):
+        """
+        Classifies bias in the article content using a pre-trained model.
+        """
+        pipe = pipeline("text-classification", model="valurank/distilroberta-bias")
+        article_content = state.get("article_content", "")
+        result = pipe(article_content)
+        return {"analysis_type": "roBERTa-bias-classification", "results": result}

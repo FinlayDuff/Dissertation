@@ -24,28 +24,33 @@ poetry install
 ```bash
 ├── README.md                 # Overview of the project
 ├── pyproject.toml            # Dependencies
-├── data
+├── poetry.lock               # Locked dependencies
+├── Makefile                  # Build and management commands
+├── main.py                   # Main entry point of the application
+├── config                    # Configuration files
+│   ├── datasets.yml          # Dataset configurations
+│   ├── experiments.py        # Experiment configurations
+│   ├── prompts.py            # Prompt configurations
+│   └── signals.py            # Signal configurations
+├── core                      # Core modules and classes
+│   ├── __init__.py
+│   ├── experiment.py         # Experiment management
+│   ├── graph_manager.py      # Workflow graph management
+│   ├── llm_factory.py        # LLM initialization and configuration
+│   ├── misinformation_detection.py # Misinformation detection logic
+│   ├── state.py              # State management
+│   └── README.md             # Core folder overview
+├── data                      # Data storage
 │   ├── raw                   # Raw datasets
-│   ├── processed             # Preprocessed datasets
-│   └── splits                # Train, validation, and test splits
-├── notebooks
-│   ├── exploration           # Data exploration and initial analysis
-│   ├── baseline              # Baseline model experiments
-│   └── complex_models        # Advanced model experiments
-├── scripts
-│   ├── data_preprocessing.py # Data cleaning and preprocessing
-│   ├── train_baseline.py     # Training baseline models
-│   ├── evaluate.py           # Evaluating models
-│   └── train_complex.py      # Training complex models
-├── models
-│   ├── baseline              # Saved baseline models
-│   └── complex               # Saved advanced models
-├── results
-│   ├── baseline              # Results from baseline models
-│   └── complex               # Results from complex models
-├── logs
-│   ├── training_logs         # Logs from model training sessions
-│   └── evaluation_logs       # Logs from model evaluations
-└── config
-    └── config.yaml           # Configuration files for experiments
+│   ├── transformed           # Transformed datasets
+│   └── README.md             # Data folder overview
+├── logs                      # Logs from various processes
+├── models                    # Saved models
+├── notebooks                 # Jupyter notebooks
+│   ├── __init__.py
+│   └── zero_shot.ipynb       # Zero-shot learning experiments
+├── results                   # Experiment results
+├── scripts                   # Utility scripts
+│   ├── __init__.py
+├── utils                     # Utility functions and helpers
 ```

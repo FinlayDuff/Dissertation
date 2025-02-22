@@ -1,0 +1,1830 @@
+{
+    "experiment_id": "82e317f8-5d94-4b37-9610-1bac288bae85",
+    "timestamp": "2025-02-22T14:34:15.304505",
+    "experiment_name": "bulk_signals_gpt4",
+    "description": "Evaluating graph-based misinformation detection system.",
+    "config": {
+        "description": "All GPT-4 experiment with bulk signals",
+        "classification_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": false,
+            "timeout": 300
+        },
+        "signals_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": false,
+            "timeout": 300
+        },
+        "critic_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.1,
+            "local": false,
+            "timeout": 300
+        },
+        "signals": {
+            "enabled": true,
+            "use_bulk": true
+        },
+        "evaluation": {
+            "few_shot": false,
+            "few_shot_examples": null,
+            "metrics": [
+                "accuracy",
+                "precision",
+                "recall",
+                "f1"
+            ]
+        }
+    },
+    "results": {
+        "runs": [
+            {
+                "id": "1d640e35-9af1-4336-8305-8a0d37e44531",
+                "name": "Target",
+                "start_time": "2025-02-22T14:34:18.632753+00:00",
+                "end_time": "2025-02-22T14:34:40.734838+00:00",
+                "inputs": {
+                    "example": {
+                        "date": "11/18/2017",
+                        "source": "alaraby",
+                        "unit_id": 1923102973,
+                        "location": "damascus",
+                        "article_title": "Three White Helmets workers and six children killed in Syria air",
+                        "article_content": "Date of publication 18 November 2017 Heavy Syrian regime bombing has killed three emergency workers from the White Helmets while six children were also killed in Damascus air raids. Tags Syria Eastern Ghouta Douma Syrian regime bombing Siege White Helmets Three rescue workers from the Syrian Civil Defence - better known as the White Helmets - have been killed in bombing in a besieged Damascus suburb the group said on Friday. The men were killed as they provided aid to civilians injured in bombing in Syrias Eastern Ghouta region when the air strike took place. Other workers from the rescue team were also injured in the attack the group said with four children and one man killed in earlier regime shelling. \"The civil defence [White Helmets] condemns the bombing and raids on the cities and towns of eastern Ghouta which focuses on targeting civilian centres and aid workers\" the group said in a statement. \"Today the regime air force targeted [a] Syrian civil defence team [as they were] working in Douma city. Three volunteers were killed and most of the other volunteers were injured.\" Siege Watch claimed the workers were targeted by a \"guided missile\" which follows routine \"double tap\" attacks on bomb sites as rescue workers attempt to save survivors. Opposition Damascus suburb Eastern Ghouta has been subject to ferocious bombing and shelling by the Syrian regime this week. At least six children were among 12 civilians killed in the district during bombing and shelling on Friday Siege Watch reported. The White Helmets said that 45 people have been killed and 307 injured in three days of regime attacks on Eastern Ghouta. These include the use of 38 banned cluster bombs drone attacks hundreds of shells and five surface-to-surface missiles. Eastern Ghouta is also subject to a horrific siege which is starving the civilian population and leaving them without desperately needed medical equipment and medicine activists and NGOs say. White Helmets volunteers are the first on the scene at sites hit by bombs and shells with scores killed in subsequent attacks. The group are believed to have saved the lives of more than 100000 Syrians injured in bombings. Read Also"
+                    }
+                },
+                "outputs": {
+                    "label": 1,
+                    "confidence": 0.9,
+                    "explanation": [
+                        "The article provides specific details about the bombing and the casualties, enhancing its credibility.",
+                        "It cites statements from credible organizations like the White Helmets and Siege Watch, which serve as supporting evidence.",
+                        "The tone is formal and journalistic, appropriate for reporting on serious events, without any informal elements.",
+                        "The claims made are supported by credible organizations, indicating that there are no unverified claims.",
+                        "The article maintains a respectful tone and does not use incivility or impoliteness."
+                    ],
+                    "credibility_signals": {
+                        "evidence": {
+                            "label": 1,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article provides specific details about the bombing and the casualties.",
+                                "It cites statements from the White Helmets and Siege Watch, which serve as supporting evidence."
+                            ]
+                        },
+                        "bias": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The article presents factual information about the events without overt bias.",
+                                "It reports on the actions of the Syrian regime and the White Helmets without favoring one side."
+                            ]
+                        },
+                        "inference": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The article implies a causal relationship between the bombing and the deaths of the workers and children.",
+                                "It discusses the nature of the attacks and their impact on civilians."
+                            ]
+                        },
+                        "polarising_language": {
+                            "label": 1,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "Terms like 'regime' and 'ferocious bombing' can create a division in perception.",
+                                "The language used may evoke strong feelings about the conflict."
+                            ]
+                        },
+                        "document_citation": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article references specific organizations (White Helmets, Siege Watch) that provide credibility.",
+                                "It does not lack citations of studies or documents."
+                            ]
+                        },
+                        "informal_tone": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The tone is formal and journalistic, appropriate for reporting on serious events.",
+                                "There are no elements of informal tone present."
+                            ]
+                        },
+                        "explicitly_unverified_claims": {
+                            "label": 0,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The claims made are supported by statements from credible organizations.",
+                                "There is no indication of unverified claims."
+                            ]
+                        },
+                        "personal_perspective": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article focuses on reporting facts rather than personal opinions.",
+                                "It presents information from organizations involved in the events."
+                            ]
+                        },
+                        "emotional_valence": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The language used carries a strong emotional weight, discussing the deaths of children and aid workers.",
+                                "It evokes sympathy and concern for the victims."
+                            ]
+                        },
+                        "call_to_action": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The article does not contain any direct calls to action.",
+                                "It is primarily informative."
+                            ]
+                        },
+                        "expert_citation": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article cites credible organizations involved in humanitarian efforts.",
+                                "There is no lack of expert citation."
+                            ]
+                        },
+                        "clickbait": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The title is straightforward and accurately reflects the content.",
+                                "It does not use sensationalized language."
+                            ]
+                        },
+                        "incorrect_spelling": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The text is free from significant misspellings or grammatical errors.",
+                                "It maintains a professional standard of writing."
+                            ]
+                        },
+                        "misleading_about_content": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The title accurately represents the content of the article.",
+                                "There is no discrepancy between the title and the body."
+                            ]
+                        },
+                        "incivility": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The article does not use stereotypes or generalizations.",
+                                "It maintains a respectful tone throughout."
+                            ]
+                        },
+                        "impoliteness": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "There are no insults or profanity present in the text.",
+                                "The language is appropriate for the subject matter."
+                            ]
+                        },
+                        "sensationalism": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The article discusses tragic events in a way that may evoke strong emotional reactions.",
+                                "However, it does not exaggerate or distort the facts."
+                            ]
+                        },
+                        "source_credibility": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The sources cited (White Helmets, Siege Watch) are credible organizations.",
+                                "There is no indication of low-credibility sources."
+                            ]
+                        },
+                        "reported_by_other_sources": {
+                            "label": 0,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The events reported are consistent with other reputable media coverage.",
+                                "There is no indication that this story is unique to this source."
+                            ]
+                        }
+                    },
+                    "critic_decision": null
+                }
+            },
+            {
+                "id": "645199f9-c2df-484f-a6e8-660f350d468d",
+                "name": "Target",
+                "start_time": "2025-02-22T14:34:18.628375+00:00",
+                "end_time": "2025-02-22T14:34:47.715475+00:00",
+                "inputs": {
+                    "example": {
+                        "date": "9/15/2011",
+                        "source": "alalam",
+                        "unit_id": 1962495673,
+                        "location": "aleppo",
+                        "article_title": "23 ISIS Terrorists Killed in Turkey US-Led Coalition in Syria Report",
+                        "article_content": "Mon Jun 20 2016 23 ISIS Terrorists Killed in Turkey US-Led Coalition in Syria Report. At least 23 ISIS (Daesh) militants have been killed by Turkish artillery fire and US airstrikes in northern Syria a Turkish broadcaster claims. As many as 33 targets were hit in the joint operation which was carried out against militants preparing for an attack on Turkey Haberturk reported on Monday. Cross-border artillery fire by Turkish troops destroyed at least six weapon caches and one armed vehicle it said. The Turkish military has repeatedly targeted northern Syria with artillery shells guided missiles and mortars to hit militants who Ankara says have fired rockets at southern Turkish border towns. There have also been reports of operations by Turkeys Special Forces inside the Syrian territory. Turkey has also hinted at establishing a safe zone in the 98-kilometer (60-mile) stretch between Manbij in Aleppo Province and the Turkish border prompting objections from Iran and Russia. The US has supported the plan describing it as part of a deepening campaign by the Turkish army to push ISIS away from a vital 60-mile stretch of the Turkey-Syria border that serves as the groups main lifeline. Turkey and the US however do not see eye to eye on Washingtons support for Kurdish militants in northern Syria. Prime Minister Binali Yildirim said last week Turkey would not allow cooperation with terrorist organizations in Syria referring to Kurdish groups which the US supports. Turkey says the fighters are a terrorist organization affiliated with the outlawed Kurdistan Workers Party (PKK) but the US sees them as a partner in Syria operations. In a speech to his ruling AK Party in parliament last Tuesday Yildirim said Turkey wont allow formation of new states in Syria echoing suspicion that the Kurdish campaign was aimed at establishing a separate state. SSH 11"
+                    }
+                },
+                "outputs": {
+                    "label": 0,
+                    "confidence": 0.85,
+                    "explanation": [
+                        "The article relies heavily on claims made by a Turkish broadcaster without providing independent verification or evidence.",
+                        "It exhibits a clear bias towards the Turkish government's perspective, particularly in its characterization of Kurdish groups as terrorists.",
+                        "The language used is polarizing, employing terms like 'terrorists' and 'militants' that create divisions.",
+                        "There are unverified claims regarding the number of ISIS militants killed, raising questions about the reliability of the information.",
+                        "The article lacks citations from independent experts or multiple reputable sources, which diminishes its credibility."
+                    ],
+                    "credibility_signals": {
+                        "evidence": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text references claims made by a Turkish broadcaster but does not provide direct evidence or data to substantiate the claims.",
+                                "The lack of detailed evidence or statistics weakens the credibility of the assertions made."
+                            ]
+                        },
+                        "bias": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The text reflects a bias towards the Turkish perspective, particularly in its portrayal of Kurdish groups as terrorists.",
+                                "The framing of the conflict suggests a one-sided view that may not fully represent the complexities of the situation."
+                            ]
+                        },
+                        "inference": {
+                            "label": 1,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "The text implies a causal relationship between Turkish military actions and the killing of ISIS militants without providing clear evidence of direct causation.",
+                                "This suggests a potential oversimplification of the situation."
+                            ]
+                        },
+                        "polarising_language": {
+                            "label": 1,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The use of terms like 'terrorists' and 'militants' creates a clear division between groups.",
+                                "The language used is likely to evoke strong reactions and reinforce existing divisions."
+                            ]
+                        },
+                        "document_citation": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "While the text references a Turkish broadcaster, it does not cite specific studies or documents that would provide further credibility.",
+                                "The reliance on a single source limits the overall credibility of the claims."
+                            ]
+                        },
+                        "informal_tone": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The tone of the text is formal and journalistic, lacking elements of informality such as all caps or excessive punctuation.",
+                                "This suggests a more serious approach to reporting."
+                            ]
+                        },
+                        "explicitly_unverified_claims": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text includes claims about the number of ISIS militants killed without verification from independent sources.",
+                                "This raises questions about the reliability of the information presented."
+                            ]
+                        },
+                        "personal_perspective": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The text includes statements from Turkish officials that reflect their personal opinions and political stance.",
+                                "This may detract from the objectivity of the reporting."
+                            ]
+                        },
+                        "emotional_valence": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The language used carries a strong emotional charge, particularly in the context of terrorism and military action.",
+                                "This can influence readers' perceptions and reactions."
+                            ]
+                        },
+                        "call_to_action": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text does not contain any direct calls to action for the readers.",
+                                "It primarily serves to inform rather than mobilize."
+                            ]
+                        },
+                        "expert_citation": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text does not cite any experts in the field, relying instead on government and military sources.",
+                                "This limits the depth of analysis and credibility."
+                            ]
+                        },
+                        "clickbait": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The title is straightforward and descriptive, lacking sensationalized language.",
+                                "It accurately reflects the content of the article."
+                            ]
+                        },
+                        "incorrect_spelling": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The text appears to be free of significant spelling or grammatical errors.",
+                                "This indicates a level of professionalism in writing."
+                            ]
+                        },
+                        "misleading_about_content": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The title accurately reflects the content discussed in the article.",
+                                "There is no indication of misleading information."
+                            ]
+                        },
+                        "incivility": {
+                            "label": 1,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "The text uses terms that could be seen as generalizations about groups, particularly regarding the Kurdish fighters.",
+                                "This could be interpreted as incivility in the context of political discourse."
+                            ]
+                        },
+                        "impoliteness": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The text does not contain insults, name-calling, or profanity.",
+                                "It maintains a formal tone throughout."
+                            ]
+                        },
+                        "sensationalism": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The framing of the military actions and the use of terms like 'terrorists' can evoke strong emotional reactions.",
+                                "This suggests a level of sensationalism in the presentation."
+                            ]
+                        },
+                        "source_credibility": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The reliance on a single Turkish broadcaster may indicate low credibility, especially given the political context.",
+                                "This raises concerns about the reliability of the information."
+                            ]
+                        },
+                        "reported_by_other_sources": {
+                            "label": 0,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The events described may have been reported by other sources, but the text does not provide cross-references.",
+                                "This makes it difficult to assess the uniqueness of the reporting."
+                            ]
+                        }
+                    },
+                    "critic_decision": null
+                }
+            },
+            {
+                "id": "c235a767-3760-4d1a-999d-b84c4dea602f",
+                "name": "Target",
+                "start_time": "2025-02-22T14:34:18.631474+00:00",
+                "end_time": "2025-02-22T14:34:48.143832+00:00",
+                "inputs": {
+                    "example": {
+                        "date": "4/9/2017",
+                        "source": "sputnik",
+                        "unit_id": 1965495380,
+                        "location": "raqqa",
+                        "article_title": "Kurdish-Led Forces Eliminate 12 Daesh Militants Near Al Tabqah in Northern Syria",
+                        "article_content": "09.04.2017Get short URL 0 85 12 Daesh terrorists were killed by Kurdish-led Syrian Democratic Forces (SDF) near Syrias northern town of Al Tabqah according to local media. MOSCOW (Sputnik) Kurdish-led Syrian Democratic Forces (SDF) eliminated 12 Islamic State jihadist groups (ISIL or Daesh outlawed in Russia) militants near Syrias northern town of Al Tabqah media reported Sunday. According to the Kurdish Hawar news agency the clashes erupted on Saturday night to the east from Al Tabqah and continued till Sunday morning. REUTERS Rodi Said Daesh Trying to Launch Counteroffensive Against Syrian Kurds Near Al Tabqa Reports On Saturday reports emerged that Daesh had been trying to break the frontline between Al Tabqah and the dam on the Euphrates for two days but SDF managed to repel the attacks. In November 2016 the SDF which predominately consists of Kurdish fighters but also includes members of the Syrian Arab Coalition launched an operation called the Wrath of Euphrates to seize control over Syrian Raqqa the de facto Daesh capital."
+                    }
+                },
+                "outputs": {
+                    "label": 0,
+                    "confidence": 0.85,
+                    "explanation": [
+                        "The article presents claims about the elimination of Daesh militants without substantial supporting evidence.",
+                        "It shows bias towards the Kurdish-led forces, lacking opposing viewpoints.",
+                        "The claims made are not verified, particularly regarding the number of militants killed.",
+                        "The language used is polarising and carries a negative connotation towards Daesh.",
+                        "The sources cited are local media, which may not be considered highly credible."
+                    ],
+                    "credibility_signals": {
+                        "evidence": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text presents claims about the elimination of Daesh militants.",
+                                "However, it does not provide substantial supporting evidence or arguments to substantiate these claims."
+                            ]
+                        },
+                        "bias": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The text appears to favor the Kurdish-led forces without presenting opposing viewpoints.",
+                                "This could indicate a bias towards the Kurdish perspective in the conflict."
+                            ]
+                        },
+                        "inference": {
+                            "label": 1,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "The text implies a causal relationship between the actions of the SDF and the elimination of Daesh militants.",
+                                "This suggests an inference about the effectiveness of the SDF's operations."
+                            ]
+                        },
+                        "polarising_language": {
+                            "label": 1,
+                            "confidence": 0.5,
+                            "explanation": [
+                                "The use of terms like 'Daesh' and 'terrorists' can create divisions between groups.",
+                                "This language can be seen as polarising in the context of the conflict."
+                            ]
+                        },
+                        "document_citation": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text references local media and the Kurdish Hawar news agency.",
+                                "However, it lacks citations of specific studies or documents to support its claims."
+                            ]
+                        },
+                        "informal_tone": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The tone of the text is formal and journalistic.",
+                                "There are no elements of informal tone such as all caps or excessive punctuation."
+                            ]
+                        },
+                        "explicitly_unverified_claims": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The claims about the number of militants killed are presented without verification.",
+                                "This indicates a lack of confirmation for these specific claims."
+                            ]
+                        },
+                        "personal_perspective": {
+                            "label": 0,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The text primarily reports on events rather than expressing the author's personal opinions.",
+                                "It maintains a factual reporting style."
+                            ]
+                        },
+                        "emotional_valence": {
+                            "label": 1,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "The language used carries a predominantly negative connotation towards Daesh.",
+                                "This suggests a strong emotional valence in the reporting."
+                            ]
+                        },
+                        "call_to_action": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The text does not contain any language that instructs readers to take action.",
+                                "It is purely informative."
+                            ]
+                        },
+                        "expert_citation": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text does not cite any experts in the subject matter.",
+                                "It relies on local media sources instead."
+                            ]
+                        },
+                        "clickbait": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The title is straightforward and does not contain sensationalised or misleading headlines.",
+                                "It accurately reflects the content of the article."
+                            ]
+                        },
+                        "incorrect_spelling": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text does not contain significant misspellings or grammatical errors.",
+                                "It is well-written and clear."
+                            ]
+                        },
+                        "misleading_about_content": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The title accurately reflects the content of the article.",
+                                "There is no indication of misleading information."
+                            ]
+                        },
+                        "incivility": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The text does not use stereotypes or generalisations of groups of people.",
+                                "It maintains a neutral tone regarding different groups."
+                            ]
+                        },
+                        "impoliteness": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "There are no insults, name-calling, or profanity present in the text.",
+                                "It is written in a respectful manner."
+                            ]
+                        },
+                        "sensationalism": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text presents information in a factual manner without exaggeration.",
+                                "It does not aim to evoke strong emotional reactions."
+                            ]
+                        },
+                        "source_credibility": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The sources cited (local media and Hawar news agency) are not low-credibility.",
+                                "However, they may not be considered highly credible either."
+                            ]
+                        },
+                        "reported_by_other_sources": {
+                            "label": 0,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The events described are likely reported by other reputable media outlets.",
+                                "The context of the conflict suggests that such incidents are commonly covered."
+                            ]
+                        }
+                    },
+                    "critic_decision": null
+                }
+            },
+            {
+                "id": "b0b8fd33-7dbf-4577-943e-740e50d28d40",
+                "name": "Target",
+                "start_time": "2025-02-22T14:34:18.633796+00:00",
+                "end_time": "2025-02-22T14:34:49.665614+00:00",
+                "inputs": {
+                    "example": {
+                        "date": "8/15/2013",
+                        "source": "ahram",
+                        "unit_id": 1923848203,
+                        "location": "aleppo",
+                        "article_title": "Suicide bomber kills six in Syria restaurant Reports",
+                        "article_content": "Suicide bomber kills six in Syria restaurant Reports Suicide bombing in Aleppo restaurant at student graduation celebration kills six and wounds 19 some in critical condition says monitoring group AFP Friday 23 Aug 2013 A suicide bombing in a restaurant in Syrias second city Aleppo killed six people including a journalist from pro-government television state media and a monitoring group said Friday. The blast struck as a group of youths celebrated the graduation of a student who was one of those killed in the attack in the dining area of Mogambo on Thursday said the Syrian Observatory for Human Rights. \"The attack also wounded 19 people including some in critical condition\" said the Britain-based organisation. The official SANA news agency also reported the attack and singled out the death of the journalist it identified as Al-Ikhbariya TV correspondent Hassan Muhanna. The attack occurred in a part of Aleppo controlled by the regime of President Bashar al-Assad which has been fighting an armed uprising for more than two years in a conflict that has killed more than 100000. On May 27 another Al-Ikhbariya journalist was killed by a sniper in the then rebel stronghold of Qusayr. Prior to his death media watchdog Reporters Without Borders said 23 journalists had been killed in Syria since the countrys conflict erupted in March 2011."
+                    }
+                },
+                "outputs": {
+                    "label": 1,
+                    "confidence": 0.9,
+                    "explanation": [
+                        "The article provides specific details about the bombing incident, including the number of casualties and the context of the event.",
+                        "It cites credible sources such as the Syrian Observatory for Human Rights and the official SANA news agency, which adds reliability to the claims made.",
+                        "The information is corroborated by multiple reputable sources, enhancing its credibility.",
+                        "The language used is neutral and factual, avoiding sensationalism or bias."
+                    ],
+                    "credibility_signals": {
+                        "evidence": {
+                            "label": 1,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article provides specific details about the bombing incident, including the number of casualties and the context of the event.",
+                                "It cites a monitoring group and an official news agency, which adds credibility to the claims made."
+                            ]
+                        },
+                        "bias": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text presents factual information about the bombing without showing clear bias towards any side.",
+                                "It reports on both the pro-government journalist's death and the broader context of the conflict."
+                            ]
+                        },
+                        "inference": {
+                            "label": 0,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The article does not make unfounded claims about correlation or causation.",
+                                "It sticks to reporting the event and its immediate consequences."
+                            ]
+                        },
+                        "polarising_language": {
+                            "label": 0,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The language used is neutral and descriptive, focusing on the event rather than creating divisions.",
+                                "There are no terms that suggest a polarising viewpoint."
+                            ]
+                        },
+                        "document_citation": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article cites specific sources, including the Syrian Observatory for Human Rights and the official SANA news agency.",
+                                "This supports the claims made in the text."
+                            ]
+                        },
+                        "informal_tone": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The tone of the article is formal and journalistic.",
+                                "There are no elements of informal language such as all caps or excessive punctuation."
+                            ]
+                        },
+                        "explicitly_unverified_claims": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The claims made in the article are supported by cited sources.",
+                                "There are no claims that lack verification."
+                            ]
+                        },
+                        "personal_perspective": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The article reports on events without inserting the author's personal opinions.",
+                                "It maintains an objective tone throughout."
+                            ]
+                        },
+                        "emotional_valence": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "While the subject matter is tragic, the language used is factual and does not evoke strong emotional reactions.",
+                                "The reporting is straightforward and neutral."
+                            ]
+                        },
+                        "call_to_action": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The article does not contain any language that encourages readers to take action.",
+                                "It is purely informative."
+                            ]
+                        },
+                        "expert_citation": {
+                            "label": 0,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The article cites credible sources, including a monitoring group and an official news agency.",
+                                "There are no claims made without expert backing."
+                            ]
+                        },
+                        "clickbait": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The title is straightforward and accurately reflects the content of the article.",
+                                "It does not use sensationalised language to attract clicks."
+                            ]
+                        },
+                        "incorrect_spelling": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The text is free from significant spelling or grammatical errors.",
+                                "It maintains a professional standard of writing."
+                            ]
+                        },
+                        "misleading_about_content": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The title accurately represents the content of the article.",
+                                "There is no discrepancy between the title and the body of the text."
+                            ]
+                        },
+                        "incivility": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "The article does not use stereotypes or generalisations about groups of people.",
+                                "It focuses on reporting the incident without incivility."
+                            ]
+                        },
+                        "impoliteness": {
+                            "label": 0,
+                            "confidence": 0.95,
+                            "explanation": [
+                                "There are no insults, name-calling, or profanity present in the text.",
+                                "The language is respectful and factual."
+                            ]
+                        },
+                        "sensationalism": {
+                            "label": 0,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The article presents the information in a straightforward manner without exaggeration.",
+                                "It does not aim to evoke strong emotional reactions through sensationalism."
+                            ]
+                        },
+                        "source_credibility": {
+                            "label": 1,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The sources cited, such as the Syrian Observatory for Human Rights and SANA, are credible.",
+                                "This enhances the reliability of the information presented."
+                            ]
+                        },
+                        "reported_by_other_sources": {
+                            "label": 1,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The incident is reported by multiple reputable sources, including AFP and SANA.",
+                                "This corroborates the information provided in the article."
+                            ]
+                        }
+                    },
+                    "critic_decision": null
+                }
+            },
+            {
+                "id": "c8f542fa-48fd-422d-96bf-76dd15961eda",
+                "name": "Target",
+                "start_time": "2025-02-22T14:34:18.631021+00:00",
+                "end_time": "2025-02-22T14:34:58.932297+00:00",
+                "inputs": {
+                    "example": {
+                        "date": "4/4/2016",
+                        "source": "manar",
+                        "unit_id": 1965511204,
+                        "location": "idlib",
+                        "article_title": "Al-Nusra Spokesman Son 20 Terrorists Killed in Idleb Strikes",
+                        "article_content": "04-04-2016 Al-Nusra Spokesman Son 20 Terrorists Killed in Idleb Strikes. The spokesman for Al-Qaedas Syrian affiliate Al-Nusra Front takfiri group his son and 20 other terrorists were killed in air strikes Sunday in the northeast of the country The spokesman for Al-Qaedas Syrian affiliate Al-Nusra Front takfiri group his son and 20 other terrorists were killed in air strikes Sunday in the northeast of the country a monitor group said. \"Abu Firas al-Suri his son and at least 20 jihadists of Al-Nusra and Jund al-Aqsa and jihadists from Uzbekistan were killed in strikes on positions in Idleb province\" UK-based Syrian Observatory for Human Rights chief Rami Abdel Rahman said in a statement. The monitor said it was not immediately clear if the raids were carried out by Syrian regime warplanes or their Russian allies. Abdel Rahman indicated that Suri was meeting with other leading terrorists in Kafar Jales when the raids took place. Two other Al-Nusra and Jund al-Aqsa targets were also hit and many were seriously injured he added. Syrian Suri real name Radwan Nammous fought against the Soviet forces in Afghanistan where he met Al-Qaeda leader Osama bin Laden and Abdullah Azzam a bin Laden mentor before returning to Syria in 2011 the AFP reported citing his supporters on Twitter. On Wednesday a drone strike near Syrian Al-Raqqa province killed a terrorist commander according to the Observatory the latest in a series of blows to the terrorists in recent weeks. "
+                    }
+                },
+                "outputs": {
+                    "label": 0,
+                    "confidence": 0.85,
+                    "explanation": [
+                        "The article contains biased language, referring to individuals as 'terrorists' and 'jihadists', which indicates a lack of neutrality.",
+                        "It relies heavily on a single source (the Syrian Observatory for Human Rights), which has a mixed reputation for credibility.",
+                        "The claims made about the air strikes and the deaths lack corroboration from multiple sources, raising concerns about their validity.",
+                        "The text uses polarizing and emotionally charged language, which can mislead readers and create divisions.",
+                        "Overall, the combination of bias, lack of supporting evidence, and reliance on a questionable source leads to the classification of this article as fake."
+                    ],
+                    "credibility_signals": {
+                        "evidence": {
+                            "label": 0,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text references a specific event (air strikes) and includes a quote from a credible source (Rami Abdel Rahman from the Syrian Observatory for Human Rights).",
+                                "However, it lacks detailed evidence or data to substantiate the claims made."
+                            ]
+                        },
+                        "bias": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The use of terms like 'takfiri' and 'terrorists' indicates a potential bias against the groups mentioned.",
+                                "The framing of the narrative suggests a particular viewpoint on the conflict."
+                            ]
+                        },
+                        "inference": {
+                            "label": 1,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text implies a causal relationship between the air strikes and the deaths of the individuals mentioned.",
+                                "It suggests that the air strikes were specifically targeting these groups without providing evidence of intent."
+                            ]
+                        },
+                        "polarising_language": {
+                            "label": 1,
+                            "confidence": 0.85,
+                            "explanation": [
+                                "The language used creates a division between 'terrorists' and 'the state' or 'the military'.",
+                                "Terms like 'jihadists' and 'terrorists' are polarising and contribute to a divisive narrative."
+                            ]
+                        },
+                        "document_citation": {
+                            "label": 0,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "The text cites a specific source (the Syrian Observatory for Human Rights) but does not provide formal citations or references to studies.",
+                                "The citation is informal and lacks academic rigor."
+                            ]
+                        },
+                        "informal_tone": {
+                            "label": 0,
+                            "confidence": 0.5,
+                            "explanation": [
+                                "The tone is mostly formal, typical of news reporting.",
+                                "There are no elements like all caps or excessive punctuation that would indicate an informal tone."
+                            ]
+                        },
+                        "explicitly_unverified_claims": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The text includes claims about the deaths of individuals without providing verification or corroboration from multiple sources.",
+                                "The statement about the air strikes lacks confirmation of the responsible party."
+                            ]
+                        },
+                        "personal_perspective": {
+                            "label": 1,
+                            "confidence": 0.75,
+                            "explanation": [
+                                "The text includes opinions and interpretations from the spokesperson and the monitor group.",
+                                "It reflects a subjective viewpoint rather than purely factual reporting."
+                            ]
+                        },
+                        "emotional_valence": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The language used carries a strong negative emotional valence, particularly in describing the individuals involved.",
+                                "Words like 'terrorists' and 'killed' evoke strong emotional reactions."
+                            ]
+                        },
+                        "call_to_action": {
+                            "label": 0,
+                            "confidence": 0.4,
+                            "explanation": [
+                                "The text does not contain a direct call to action for the readers.",
+                                "It is primarily informative rather than persuasive."
+                            ]
+                        },
+                        "expert_citation": {
+                            "label": 0,
+                            "confidence": 0.5,
+                            "explanation": [
+                                "While it cites a source, it does not reference any experts in the field of conflict or terrorism studies.",
+                                "The source cited is a monitoring group rather than an academic or expert authority."
+                            ]
+                        },
+                        "clickbait": {
+                            "label": 0,
+                            "confidence": 0.6,
+                            "explanation": [
+                                "The title is straightforward and does not appear to be sensationalized.",
+                                "It accurately reflects the content of the article."
+                            ]
+                        },
+                        "incorrect_spelling": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text does not contain significant misspellings or grammatical errors.",
+                                "It is written in a coherent and structured manner."
+                            ]
+                        },
+                        "misleading_about_content": {
+                            "label": 0,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The title aligns with the content of the article and does not mislead about the information presented.",
+                                "It accurately summarizes the main event discussed."
+                            ]
+                        },
+                        "incivility": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The text uses terms that generalize and stereotype groups of people, particularly in the context of 'terrorists'.",
+                                "This can be seen as a form of incivility in discourse."
+                            ]
+                        },
+                        "impoliteness": {
+                            "label": 0,
+                            "confidence": 0.9,
+                            "explanation": [
+                                "The text does not contain insults, name-calling, or profanity.",
+                                "It maintains a formal tone throughout."
+                            ]
+                        },
+                        "sensationalism": {
+                            "label": 1,
+                            "confidence": 0.8,
+                            "explanation": [
+                                "The language used is designed to evoke strong emotional reactions, particularly regarding violence and death.",
+                                "It presents the information in a dramatic manner."
+                            ]
+                        },
+                        "source_credibility": {
+                            "label": 1,
+                            "confidence": 0.7,
+                            "explanation": [
+                                "The source cited (Syrian Observatory for Human Rights) has a mixed reputation, often criticized for its credibility.",
+                                "This raises concerns about the reliability of the information presented."
+                            ]
+                        },
+                        "reported_by_other_sources": {
+                            "label": 0,
+                            "confidence": 0.5,
+                            "explanation": [
+                                "The event described may have been reported by other sources, but the text does not provide evidence of this.",
+                                "It is unclear if this specific story has been covered by reputable media outlets."
+                            ]
+                        }
+                    },
+                    "critic_decision": null
+                }
+            }
+        ],
+        "examples": [
+            {
+                "inputs": {
+                    "date": "11/18/2017",
+                    "source": "alaraby",
+                    "unit_id": 1923102973,
+                    "location": "damascus",
+                    "article_title": "Three White Helmets workers and six children killed in Syria air",
+                    "article_content": "Date of publication 18 November 2017 Heavy Syrian regime bombing has killed three emergency workers from the White Helmets while six children were also killed in Damascus air raids. Tags Syria Eastern Ghouta Douma Syrian regime bombing Siege White Helmets Three rescue workers from the Syrian Civil Defence - better known as the White Helmets - have been killed in bombing in a besieged Damascus suburb the group said on Friday. The men were killed as they provided aid to civilians injured in bombing in Syrias Eastern Ghouta region when the air strike took place. Other workers from the rescue team were also injured in the attack the group said with four children and one man killed in earlier regime shelling. \"The civil defence [White Helmets] condemns the bombing and raids on the cities and towns of eastern Ghouta which focuses on targeting civilian centres and aid workers\" the group said in a statement. \"Today the regime air force targeted [a] Syrian civil defence team [as they were] working in Douma city. Three volunteers were killed and most of the other volunteers were injured.\" Siege Watch claimed the workers were targeted by a \"guided missile\" which follows routine \"double tap\" attacks on bomb sites as rescue workers attempt to save survivors. Opposition Damascus suburb Eastern Ghouta has been subject to ferocious bombing and shelling by the Syrian regime this week. At least six children were among 12 civilians killed in the district during bombing and shelling on Friday Siege Watch reported. The White Helmets said that 45 people have been killed and 307 injured in three days of regime attacks on Eastern Ghouta. These include the use of 38 banned cluster bombs drone attacks hundreds of shells and five surface-to-surface missiles. Eastern Ghouta is also subject to a horrific siege which is starving the civilian population and leaving them without desperately needed medical equipment and medicine activists and NGOs say. White Helmets volunteers are the first on the scene at sites hit by bombs and shells with scores killed in subsequent attacks. The group are believed to have saved the lives of more than 100000 Syrians injured in bombings. Read Also"
+                },
+                "outputs": {
+                    "label": 1
+                }
+            },
+            {
+                "inputs": {
+                    "date": "9/15/2011",
+                    "source": "alalam",
+                    "unit_id": 1962495673,
+                    "location": "aleppo",
+                    "article_title": "23 ISIS Terrorists Killed in Turkey US-Led Coalition in Syria Report",
+                    "article_content": "Mon Jun 20 2016 23 ISIS Terrorists Killed in Turkey US-Led Coalition in Syria Report. At least 23 ISIS (Daesh) militants have been killed by Turkish artillery fire and US airstrikes in northern Syria a Turkish broadcaster claims. As many as 33 targets were hit in the joint operation which was carried out against militants preparing for an attack on Turkey Haberturk reported on Monday. Cross-border artillery fire by Turkish troops destroyed at least six weapon caches and one armed vehicle it said. The Turkish military has repeatedly targeted northern Syria with artillery shells guided missiles and mortars to hit militants who Ankara says have fired rockets at southern Turkish border towns. There have also been reports of operations by Turkeys Special Forces inside the Syrian territory. Turkey has also hinted at establishing a safe zone in the 98-kilometer (60-mile) stretch between Manbij in Aleppo Province and the Turkish border prompting objections from Iran and Russia. The US has supported the plan describing it as part of a deepening campaign by the Turkish army to push ISIS away from a vital 60-mile stretch of the Turkey-Syria border that serves as the groups main lifeline. Turkey and the US however do not see eye to eye on Washingtons support for Kurdish militants in northern Syria. Prime Minister Binali Yildirim said last week Turkey would not allow cooperation with terrorist organizations in Syria referring to Kurdish groups which the US supports. Turkey says the fighters are a terrorist organization affiliated with the outlawed Kurdistan Workers Party (PKK) but the US sees them as a partner in Syria operations. In a speech to his ruling AK Party in parliament last Tuesday Yildirim said Turkey wont allow formation of new states in Syria echoing suspicion that the Kurdish campaign was aimed at establishing a separate state. SSH 11"
+                },
+                "outputs": {
+                    "label": 0
+                }
+            },
+            {
+                "inputs": {
+                    "date": "4/9/2017",
+                    "source": "sputnik",
+                    "unit_id": 1965495380,
+                    "location": "raqqa",
+                    "article_title": "Kurdish-Led Forces Eliminate 12 Daesh Militants Near Al Tabqah in Northern Syria",
+                    "article_content": "09.04.2017Get short URL 0 85 12 Daesh terrorists were killed by Kurdish-led Syrian Democratic Forces (SDF) near Syrias northern town of Al Tabqah according to local media. MOSCOW (Sputnik) Kurdish-led Syrian Democratic Forces (SDF) eliminated 12 Islamic State jihadist groups (ISIL or Daesh outlawed in Russia) militants near Syrias northern town of Al Tabqah media reported Sunday. According to the Kurdish Hawar news agency the clashes erupted on Saturday night to the east from Al Tabqah and continued till Sunday morning. REUTERS Rodi Said Daesh Trying to Launch Counteroffensive Against Syrian Kurds Near Al Tabqa Reports On Saturday reports emerged that Daesh had been trying to break the frontline between Al Tabqah and the dam on the Euphrates for two days but SDF managed to repel the attacks. In November 2016 the SDF which predominately consists of Kurdish fighters but also includes members of the Syrian Arab Coalition launched an operation called the Wrath of Euphrates to seize control over Syrian Raqqa the de facto Daesh capital."
+                },
+                "outputs": {
+                    "label": 0
+                }
+            },
+            {
+                "inputs": {
+                    "date": "8/15/2013",
+                    "source": "ahram",
+                    "unit_id": 1923848203,
+                    "location": "aleppo",
+                    "article_title": "Suicide bomber kills six in Syria restaurant Reports",
+                    "article_content": "Suicide bomber kills six in Syria restaurant Reports Suicide bombing in Aleppo restaurant at student graduation celebration kills six and wounds 19 some in critical condition says monitoring group AFP Friday 23 Aug 2013 A suicide bombing in a restaurant in Syrias second city Aleppo killed six people including a journalist from pro-government television state media and a monitoring group said Friday. The blast struck as a group of youths celebrated the graduation of a student who was one of those killed in the attack in the dining area of Mogambo on Thursday said the Syrian Observatory for Human Rights. \"The attack also wounded 19 people including some in critical condition\" said the Britain-based organisation. The official SANA news agency also reported the attack and singled out the death of the journalist it identified as Al-Ikhbariya TV correspondent Hassan Muhanna. The attack occurred in a part of Aleppo controlled by the regime of President Bashar al-Assad which has been fighting an armed uprising for more than two years in a conflict that has killed more than 100000. On May 27 another Al-Ikhbariya journalist was killed by a sniper in the then rebel stronghold of Qusayr. Prior to his death media watchdog Reporters Without Borders said 23 journalists had been killed in Syria since the countrys conflict erupted in March 2011."
+                },
+                "outputs": {
+                    "label": 1
+                }
+            },
+            {
+                "inputs": {
+                    "date": "4/4/2016",
+                    "source": "manar",
+                    "unit_id": 1965511204,
+                    "location": "idlib",
+                    "article_title": "Al-Nusra Spokesman Son 20 Terrorists Killed in Idleb Strikes",
+                    "article_content": "04-04-2016 Al-Nusra Spokesman Son 20 Terrorists Killed in Idleb Strikes. The spokesman for Al-Qaedas Syrian affiliate Al-Nusra Front takfiri group his son and 20 other terrorists were killed in air strikes Sunday in the northeast of the country The spokesman for Al-Qaedas Syrian affiliate Al-Nusra Front takfiri group his son and 20 other terrorists were killed in air strikes Sunday in the northeast of the country a monitor group said. \"Abu Firas al-Suri his son and at least 20 jihadists of Al-Nusra and Jund al-Aqsa and jihadists from Uzbekistan were killed in strikes on positions in Idleb province\" UK-based Syrian Observatory for Human Rights chief Rami Abdel Rahman said in a statement. The monitor said it was not immediately clear if the raids were carried out by Syrian regime warplanes or their Russian allies. Abdel Rahman indicated that Suri was meeting with other leading terrorists in Kafar Jales when the raids took place. Two other Al-Nusra and Jund al-Aqsa targets were also hit and many were seriously injured he added. Syrian Suri real name Radwan Nammous fought against the Soviet forces in Afghanistan where he met Al-Qaeda leader Osama bin Laden and Abdullah Azzam a bin Laden mentor before returning to Syria in 2011 the AFP reported citing his supporters on Twitter. On Wednesday a drone strike near Syrian Al-Raqqa province killed a terrorist commander according to the Observatory the latest in a series of blows to the terrorists in recent weeks. "
+                },
+                "outputs": {
+                    "label": 1
+                }
+            }
+        ],
+        "evaluation_results": [
+            {
+                "key": "correct_label",
+                "score": 1.0,
+                "value": null,
+                "comment": "Predicted: 1, Actual: 1",
+                "correction": null
+            },
+            {
+                "key": "correct_label",
+                "score": 1.0,
+                "value": null,
+                "comment": "Predicted: 0, Actual: 0",
+                "correction": null
+            },
+            {
+                "key": "correct_label",
+                "score": 1.0,
+                "value": null,
+                "comment": "Predicted: 0, Actual: 0",
+                "correction": null
+            },
+            {
+                "key": "correct_label",
+                "score": 1.0,
+                "value": null,
+                "comment": "Predicted: 1, Actual: 1",
+                "correction": null
+            },
+            {
+                "key": "correct_label",
+                "score": 0.0,
+                "value": null,
+                "comment": "Predicted: 0, Actual: 1",
+                "correction": null
+            }
+        ]
+    },
+    "credibility_signals": [
+        {
+            "evidence": {
+                "label": 1,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article provides specific details about the bombing and the casualties.",
+                    "It cites statements from the White Helmets and Siege Watch, which serve as supporting evidence."
+                ]
+            },
+            "bias": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The article presents factual information about the events without overt bias.",
+                    "It reports on the actions of the Syrian regime and the White Helmets without favoring one side."
+                ]
+            },
+            "inference": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The article implies a causal relationship between the bombing and the deaths of the workers and children.",
+                    "It discusses the nature of the attacks and their impact on civilians."
+                ]
+            },
+            "polarising_language": {
+                "label": 1,
+                "confidence": 0.6,
+                "explanation": [
+                    "Terms like 'regime' and 'ferocious bombing' can create a division in perception.",
+                    "The language used may evoke strong feelings about the conflict."
+                ]
+            },
+            "document_citation": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article references specific organizations (White Helmets, Siege Watch) that provide credibility.",
+                    "It does not lack citations of studies or documents."
+                ]
+            },
+            "informal_tone": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The tone is formal and journalistic, appropriate for reporting on serious events.",
+                    "There are no elements of informal tone present."
+                ]
+            },
+            "explicitly_unverified_claims": {
+                "label": 0,
+                "confidence": 0.85,
+                "explanation": [
+                    "The claims made are supported by statements from credible organizations.",
+                    "There is no indication of unverified claims."
+                ]
+            },
+            "personal_perspective": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article focuses on reporting facts rather than personal opinions.",
+                    "It presents information from organizations involved in the events."
+                ]
+            },
+            "emotional_valence": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The language used carries a strong emotional weight, discussing the deaths of children and aid workers.",
+                    "It evokes sympathy and concern for the victims."
+                ]
+            },
+            "call_to_action": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The article does not contain any direct calls to action.",
+                    "It is primarily informative."
+                ]
+            },
+            "expert_citation": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article cites credible organizations involved in humanitarian efforts.",
+                    "There is no lack of expert citation."
+                ]
+            },
+            "clickbait": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The title is straightforward and accurately reflects the content.",
+                    "It does not use sensationalized language."
+                ]
+            },
+            "incorrect_spelling": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The text is free from significant misspellings or grammatical errors.",
+                    "It maintains a professional standard of writing."
+                ]
+            },
+            "misleading_about_content": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The title accurately represents the content of the article.",
+                    "There is no discrepancy between the title and the body."
+                ]
+            },
+            "incivility": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The article does not use stereotypes or generalizations.",
+                    "It maintains a respectful tone throughout."
+                ]
+            },
+            "impoliteness": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "There are no insults or profanity present in the text.",
+                    "The language is appropriate for the subject matter."
+                ]
+            },
+            "sensationalism": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The article discusses tragic events in a way that may evoke strong emotional reactions.",
+                    "However, it does not exaggerate or distort the facts."
+                ]
+            },
+            "source_credibility": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The sources cited (White Helmets, Siege Watch) are credible organizations.",
+                    "There is no indication of low-credibility sources."
+                ]
+            },
+            "reported_by_other_sources": {
+                "label": 0,
+                "confidence": 0.85,
+                "explanation": [
+                    "The events reported are consistent with other reputable media coverage.",
+                    "There is no indication that this story is unique to this source."
+                ]
+            }
+        },
+        {
+            "evidence": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text references claims made by a Turkish broadcaster but does not provide direct evidence or data to substantiate the claims.",
+                    "The lack of detailed evidence or statistics weakens the credibility of the assertions made."
+                ]
+            },
+            "bias": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The text reflects a bias towards the Turkish perspective, particularly in its portrayal of Kurdish groups as terrorists.",
+                    "The framing of the conflict suggests a one-sided view that may not fully represent the complexities of the situation."
+                ]
+            },
+            "inference": {
+                "label": 1,
+                "confidence": 0.6,
+                "explanation": [
+                    "The text implies a causal relationship between Turkish military actions and the killing of ISIS militants without providing clear evidence of direct causation.",
+                    "This suggests a potential oversimplification of the situation."
+                ]
+            },
+            "polarising_language": {
+                "label": 1,
+                "confidence": 0.9,
+                "explanation": [
+                    "The use of terms like 'terrorists' and 'militants' creates a clear division between groups.",
+                    "The language used is likely to evoke strong reactions and reinforce existing divisions."
+                ]
+            },
+            "document_citation": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "While the text references a Turkish broadcaster, it does not cite specific studies or documents that would provide further credibility.",
+                    "The reliance on a single source limits the overall credibility of the claims."
+                ]
+            },
+            "informal_tone": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The tone of the text is formal and journalistic, lacking elements of informality such as all caps or excessive punctuation.",
+                    "This suggests a more serious approach to reporting."
+                ]
+            },
+            "explicitly_unverified_claims": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text includes claims about the number of ISIS militants killed without verification from independent sources.",
+                    "This raises questions about the reliability of the information presented."
+                ]
+            },
+            "personal_perspective": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The text includes statements from Turkish officials that reflect their personal opinions and political stance.",
+                    "This may detract from the objectivity of the reporting."
+                ]
+            },
+            "emotional_valence": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The language used carries a strong emotional charge, particularly in the context of terrorism and military action.",
+                    "This can influence readers' perceptions and reactions."
+                ]
+            },
+            "call_to_action": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text does not contain any direct calls to action for the readers.",
+                    "It primarily serves to inform rather than mobilize."
+                ]
+            },
+            "expert_citation": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text does not cite any experts in the field, relying instead on government and military sources.",
+                    "This limits the depth of analysis and credibility."
+                ]
+            },
+            "clickbait": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The title is straightforward and descriptive, lacking sensationalized language.",
+                    "It accurately reflects the content of the article."
+                ]
+            },
+            "incorrect_spelling": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The text appears to be free of significant spelling or grammatical errors.",
+                    "This indicates a level of professionalism in writing."
+                ]
+            },
+            "misleading_about_content": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The title accurately reflects the content discussed in the article.",
+                    "There is no indication of misleading information."
+                ]
+            },
+            "incivility": {
+                "label": 1,
+                "confidence": 0.6,
+                "explanation": [
+                    "The text uses terms that could be seen as generalizations about groups, particularly regarding the Kurdish fighters.",
+                    "This could be interpreted as incivility in the context of political discourse."
+                ]
+            },
+            "impoliteness": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The text does not contain insults, name-calling, or profanity.",
+                    "It maintains a formal tone throughout."
+                ]
+            },
+            "sensationalism": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The framing of the military actions and the use of terms like 'terrorists' can evoke strong emotional reactions.",
+                    "This suggests a level of sensationalism in the presentation."
+                ]
+            },
+            "source_credibility": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The reliance on a single Turkish broadcaster may indicate low credibility, especially given the political context.",
+                    "This raises concerns about the reliability of the information."
+                ]
+            },
+            "reported_by_other_sources": {
+                "label": 0,
+                "confidence": 0.7,
+                "explanation": [
+                    "The events described may have been reported by other sources, but the text does not provide cross-references.",
+                    "This makes it difficult to assess the uniqueness of the reporting."
+                ]
+            }
+        },
+        {
+            "evidence": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text presents claims about the elimination of Daesh militants.",
+                    "However, it does not provide substantial supporting evidence or arguments to substantiate these claims."
+                ]
+            },
+            "bias": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The text appears to favor the Kurdish-led forces without presenting opposing viewpoints.",
+                    "This could indicate a bias towards the Kurdish perspective in the conflict."
+                ]
+            },
+            "inference": {
+                "label": 1,
+                "confidence": 0.6,
+                "explanation": [
+                    "The text implies a causal relationship between the actions of the SDF and the elimination of Daesh militants.",
+                    "This suggests an inference about the effectiveness of the SDF's operations."
+                ]
+            },
+            "polarising_language": {
+                "label": 1,
+                "confidence": 0.5,
+                "explanation": [
+                    "The use of terms like 'Daesh' and 'terrorists' can create divisions between groups.",
+                    "This language can be seen as polarising in the context of the conflict."
+                ]
+            },
+            "document_citation": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text references local media and the Kurdish Hawar news agency.",
+                    "However, it lacks citations of specific studies or documents to support its claims."
+                ]
+            },
+            "informal_tone": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The tone of the text is formal and journalistic.",
+                    "There are no elements of informal tone such as all caps or excessive punctuation."
+                ]
+            },
+            "explicitly_unverified_claims": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The claims about the number of militants killed are presented without verification.",
+                    "This indicates a lack of confirmation for these specific claims."
+                ]
+            },
+            "personal_perspective": {
+                "label": 0,
+                "confidence": 0.85,
+                "explanation": [
+                    "The text primarily reports on events rather than expressing the author's personal opinions.",
+                    "It maintains a factual reporting style."
+                ]
+            },
+            "emotional_valence": {
+                "label": 1,
+                "confidence": 0.6,
+                "explanation": [
+                    "The language used carries a predominantly negative connotation towards Daesh.",
+                    "This suggests a strong emotional valence in the reporting."
+                ]
+            },
+            "call_to_action": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The text does not contain any language that instructs readers to take action.",
+                    "It is purely informative."
+                ]
+            },
+            "expert_citation": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text does not cite any experts in the subject matter.",
+                    "It relies on local media sources instead."
+                ]
+            },
+            "clickbait": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The title is straightforward and does not contain sensationalised or misleading headlines.",
+                    "It accurately reflects the content of the article."
+                ]
+            },
+            "incorrect_spelling": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text does not contain significant misspellings or grammatical errors.",
+                    "It is well-written and clear."
+                ]
+            },
+            "misleading_about_content": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The title accurately reflects the content of the article.",
+                    "There is no indication of misleading information."
+                ]
+            },
+            "incivility": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The text does not use stereotypes or generalisations of groups of people.",
+                    "It maintains a neutral tone regarding different groups."
+                ]
+            },
+            "impoliteness": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "There are no insults, name-calling, or profanity present in the text.",
+                    "It is written in a respectful manner."
+                ]
+            },
+            "sensationalism": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text presents information in a factual manner without exaggeration.",
+                    "It does not aim to evoke strong emotional reactions."
+                ]
+            },
+            "source_credibility": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The sources cited (local media and Hawar news agency) are not low-credibility.",
+                    "However, they may not be considered highly credible either."
+                ]
+            },
+            "reported_by_other_sources": {
+                "label": 0,
+                "confidence": 0.7,
+                "explanation": [
+                    "The events described are likely reported by other reputable media outlets.",
+                    "The context of the conflict suggests that such incidents are commonly covered."
+                ]
+            }
+        },
+        {
+            "evidence": {
+                "label": 1,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article provides specific details about the bombing incident, including the number of casualties and the context of the event.",
+                    "It cites a monitoring group and an official news agency, which adds credibility to the claims made."
+                ]
+            },
+            "bias": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text presents factual information about the bombing without showing clear bias towards any side.",
+                    "It reports on both the pro-government journalist's death and the broader context of the conflict."
+                ]
+            },
+            "inference": {
+                "label": 0,
+                "confidence": 0.85,
+                "explanation": [
+                    "The article does not make unfounded claims about correlation or causation.",
+                    "It sticks to reporting the event and its immediate consequences."
+                ]
+            },
+            "polarising_language": {
+                "label": 0,
+                "confidence": 0.7,
+                "explanation": [
+                    "The language used is neutral and descriptive, focusing on the event rather than creating divisions.",
+                    "There are no terms that suggest a polarising viewpoint."
+                ]
+            },
+            "document_citation": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article cites specific sources, including the Syrian Observatory for Human Rights and the official SANA news agency.",
+                    "This supports the claims made in the text."
+                ]
+            },
+            "informal_tone": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The tone of the article is formal and journalistic.",
+                    "There are no elements of informal language such as all caps or excessive punctuation."
+                ]
+            },
+            "explicitly_unverified_claims": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The claims made in the article are supported by cited sources.",
+                    "There are no claims that lack verification."
+                ]
+            },
+            "personal_perspective": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The article reports on events without inserting the author's personal opinions.",
+                    "It maintains an objective tone throughout."
+                ]
+            },
+            "emotional_valence": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "While the subject matter is tragic, the language used is factual and does not evoke strong emotional reactions.",
+                    "The reporting is straightforward and neutral."
+                ]
+            },
+            "call_to_action": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The article does not contain any language that encourages readers to take action.",
+                    "It is purely informative."
+                ]
+            },
+            "expert_citation": {
+                "label": 0,
+                "confidence": 0.85,
+                "explanation": [
+                    "The article cites credible sources, including a monitoring group and an official news agency.",
+                    "There are no claims made without expert backing."
+                ]
+            },
+            "clickbait": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The title is straightforward and accurately reflects the content of the article.",
+                    "It does not use sensationalised language to attract clicks."
+                ]
+            },
+            "incorrect_spelling": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The text is free from significant spelling or grammatical errors.",
+                    "It maintains a professional standard of writing."
+                ]
+            },
+            "misleading_about_content": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The title accurately represents the content of the article.",
+                    "There is no discrepancy between the title and the body of the text."
+                ]
+            },
+            "incivility": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "The article does not use stereotypes or generalisations about groups of people.",
+                    "It focuses on reporting the incident without incivility."
+                ]
+            },
+            "impoliteness": {
+                "label": 0,
+                "confidence": 0.95,
+                "explanation": [
+                    "There are no insults, name-calling, or profanity present in the text.",
+                    "The language is respectful and factual."
+                ]
+            },
+            "sensationalism": {
+                "label": 0,
+                "confidence": 0.85,
+                "explanation": [
+                    "The article presents the information in a straightforward manner without exaggeration.",
+                    "It does not aim to evoke strong emotional reactions through sensationalism."
+                ]
+            },
+            "source_credibility": {
+                "label": 1,
+                "confidence": 0.9,
+                "explanation": [
+                    "The sources cited, such as the Syrian Observatory for Human Rights and SANA, are credible.",
+                    "This enhances the reliability of the information presented."
+                ]
+            },
+            "reported_by_other_sources": {
+                "label": 1,
+                "confidence": 0.9,
+                "explanation": [
+                    "The incident is reported by multiple reputable sources, including AFP and SANA.",
+                    "This corroborates the information provided in the article."
+                ]
+            }
+        },
+        {
+            "evidence": {
+                "label": 0,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text references a specific event (air strikes) and includes a quote from a credible source (Rami Abdel Rahman from the Syrian Observatory for Human Rights).",
+                    "However, it lacks detailed evidence or data to substantiate the claims made."
+                ]
+            },
+            "bias": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The use of terms like 'takfiri' and 'terrorists' indicates a potential bias against the groups mentioned.",
+                    "The framing of the narrative suggests a particular viewpoint on the conflict."
+                ]
+            },
+            "inference": {
+                "label": 1,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text implies a causal relationship between the air strikes and the deaths of the individuals mentioned.",
+                    "It suggests that the air strikes were specifically targeting these groups without providing evidence of intent."
+                ]
+            },
+            "polarising_language": {
+                "label": 1,
+                "confidence": 0.85,
+                "explanation": [
+                    "The language used creates a division between 'terrorists' and 'the state' or 'the military'.",
+                    "Terms like 'jihadists' and 'terrorists' are polarising and contribute to a divisive narrative."
+                ]
+            },
+            "document_citation": {
+                "label": 0,
+                "confidence": 0.6,
+                "explanation": [
+                    "The text cites a specific source (the Syrian Observatory for Human Rights) but does not provide formal citations or references to studies.",
+                    "The citation is informal and lacks academic rigor."
+                ]
+            },
+            "informal_tone": {
+                "label": 0,
+                "confidence": 0.5,
+                "explanation": [
+                    "The tone is mostly formal, typical of news reporting.",
+                    "There are no elements like all caps or excessive punctuation that would indicate an informal tone."
+                ]
+            },
+            "explicitly_unverified_claims": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The text includes claims about the deaths of individuals without providing verification or corroboration from multiple sources.",
+                    "The statement about the air strikes lacks confirmation of the responsible party."
+                ]
+            },
+            "personal_perspective": {
+                "label": 1,
+                "confidence": 0.75,
+                "explanation": [
+                    "The text includes opinions and interpretations from the spokesperson and the monitor group.",
+                    "It reflects a subjective viewpoint rather than purely factual reporting."
+                ]
+            },
+            "emotional_valence": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The language used carries a strong negative emotional valence, particularly in describing the individuals involved.",
+                    "Words like 'terrorists' and 'killed' evoke strong emotional reactions."
+                ]
+            },
+            "call_to_action": {
+                "label": 0,
+                "confidence": 0.4,
+                "explanation": [
+                    "The text does not contain a direct call to action for the readers.",
+                    "It is primarily informative rather than persuasive."
+                ]
+            },
+            "expert_citation": {
+                "label": 0,
+                "confidence": 0.5,
+                "explanation": [
+                    "While it cites a source, it does not reference any experts in the field of conflict or terrorism studies.",
+                    "The source cited is a monitoring group rather than an academic or expert authority."
+                ]
+            },
+            "clickbait": {
+                "label": 0,
+                "confidence": 0.6,
+                "explanation": [
+                    "The title is straightforward and does not appear to be sensationalized.",
+                    "It accurately reflects the content of the article."
+                ]
+            },
+            "incorrect_spelling": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text does not contain significant misspellings or grammatical errors.",
+                    "It is written in a coherent and structured manner."
+                ]
+            },
+            "misleading_about_content": {
+                "label": 0,
+                "confidence": 0.7,
+                "explanation": [
+                    "The title aligns with the content of the article and does not mislead about the information presented.",
+                    "It accurately summarizes the main event discussed."
+                ]
+            },
+            "incivility": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The text uses terms that generalize and stereotype groups of people, particularly in the context of 'terrorists'.",
+                    "This can be seen as a form of incivility in discourse."
+                ]
+            },
+            "impoliteness": {
+                "label": 0,
+                "confidence": 0.9,
+                "explanation": [
+                    "The text does not contain insults, name-calling, or profanity.",
+                    "It maintains a formal tone throughout."
+                ]
+            },
+            "sensationalism": {
+                "label": 1,
+                "confidence": 0.8,
+                "explanation": [
+                    "The language used is designed to evoke strong emotional reactions, particularly regarding violence and death.",
+                    "It presents the information in a dramatic manner."
+                ]
+            },
+            "source_credibility": {
+                "label": 1,
+                "confidence": 0.7,
+                "explanation": [
+                    "The source cited (Syrian Observatory for Human Rights) has a mixed reputation, often criticized for its credibility.",
+                    "This raises concerns about the reliability of the information presented."
+                ]
+            },
+            "reported_by_other_sources": {
+                "label": 0,
+                "confidence": 0.5,
+                "explanation": [
+                    "The event described may have been reported by other sources, but the text does not provide evidence of this.",
+                    "It is unclear if this specific story has been covered by reputable media outlets."
+                ]
+            }
+        }
+    ]
+}

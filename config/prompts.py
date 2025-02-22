@@ -106,11 +106,13 @@ STRUCTURED_OUTPUTS = {
             "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
             "explanation": str, 'Bullet point reasoning behind the classification.'
         }""",
-    "bulk_signals": """Your Output must be strictly formatted as below. No additional text is allowed.
+    "bulk_signals": """Your Output must be strictly formatted in JSON as below. No additional text is allowed.
+        EACH SIGNAL MUST BE CLASSIFIED IN YOUR RESPONSE. THERE ARE 19 signals.
+        ENSURE THAT IT IS VALID JSON.
         {
             "signals": {
                 "signal_name": {
-                    "label": int, 'Fake=0 or Credible=1'
+                    "label": int, 'False=0 or True=1'
                     "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
                     "explanation": str, 'Bullet point reasoning behind the classification.'
                 }
@@ -118,7 +120,7 @@ STRUCTURED_OUTPUTS = {
         }""",
     "individual_signal": """Your Output must be strictly formatted in JSON as below. No additional text is allowed. 
         {
-            "label": int, 'Fake=0 or Credible=1'
+            "label": int, 'False=0 or True=1'
             "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
             "explanation": str, 'Bullet point reasoning behind the classification.'
         }""",
@@ -127,12 +129,21 @@ STRUCTURED_OUTPUTS = {
             "label": str, 'TRUE or FALSE'
             "explanation": str, 'Bullet point reasoning behind the critic decision.'
         }""",
+    "signal_classification_critic": """Your Output must be strictly formatted in JSON as below. No additional text is allowed.
+        {
+            "signals": {
+                "signal_name": {
+                "label": str, 'TRUE or FALSE'
+                "explanation": str, 'Bullet point reasoning behind the critic decision.'
+                }
+            }
+        }""",
 }
 
 TASK_PROMPTS = {
     "default": "Default system prompt for general tasks.",
     "few_shot_classification": "Classify the article as Credible or Fake.",
-    "critic": """Evaluate if additional model analysis is needed.
+    "critic": """Evaluate if a model needs to be called. Based on the text 
         Return TRUE if confidence is low or signals are unclear.
         Return FALSE otherwise.
         """,
@@ -141,14 +152,31 @@ TASK_PROMPTS = {
         Provide a confidence score for your classification and a detailed explanation.
 
         """,
+    "zero_shot_classification_signals": """You are an expert at detecting misinformation in articles.
+        Task: Classify the provided article with a label of 1 for Credible or 0 for Fake.
+        Provide a confidence score for your classification and a detailed explanation.
+        The credibility signals of this article have been detected and are as follows:
+
+        """,
     "individual_signal": """You are analyzing articles for specific credibility signals.
         Signal to detect: {signal_type}
         {signal_config[prompt]}
 
         """,
     "bulk_signals": """You are analyzing articles for multiple credibility signals.
-        Analyze each of these signals:
+        TASK: Classify each of the following signals with a label of 1 for Credible or 0 for Fake.
+        Provide a confidence score for your classification and a detailed explanation.
+        EACH signal must be classified in your reponse.
         {signals_list}
 
         """,
+    "signal_classification_critic": """
+            You are evaluating whether the credibility signals have been correctly classified.
+            Task: Evaluate the classification of the following signals
+            {signals_list}
+            
+        """,
+    "followup_analysis_classification_ext": """
+        Followup analysis on the credibility signals has been conducted and is output below:  
+    """,
 }

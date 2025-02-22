@@ -3,6 +3,7 @@ from utils.data.csv_parsing import load_csv_as_dataframe
 from utils.data.langsmith_dataset import LangsmithDatasetManager
 from utils.utils import load_config
 import pandas as pd
+import argparse
 
 
 def balance_dataset_to_row_count(df, label_column, row_count):
@@ -57,18 +58,31 @@ def upload_dataset(dataset_info, dataset_manager):
 
 
 # Function to load all datasets defined in the config
-def upload_datasets(config_file, dataset_manager):
+def upload_datasets(config_file, dataset_manager, overwrite=False):
     config = load_config(config_file)
     current_datasets_dict = dataset_manager.get_current_datasets()
     for dataset_info in config["datasets"]:
         if dataset_info["name"] in current_datasets_dict.keys():
-            print(f"Deleting dataset {dataset_info['name']} from LangSmith")
-            dataset_manager.delete_dataset(dataset_info["name"])
-        upload_dataset(dataset_info, dataset_manager)
+            if overwrite:
+                print(f"Deleting dataset {dataset_info['name']} from LangSmith")
+                dataset_manager.delete_dataset(dataset_info["name"])
+                upload_dataset(dataset_info, dataset_manager)
+            else:
+                print("Dataset already exists and overwrite == False. Skipping upload.")
+        else:
+            upload_dataset(dataset_info, dataset_manager)
 
 
 # Main script to run the loading process
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Run misinformation detection experiment"
+    )
+    parser.add_argument(
+        "--overwrite", action="store_true", help="OVERWRITE existing datasets"
+    )
+    args = parser.parse_args()
+
     config_path = "config/datasets.yml"
     manager = LangsmithDatasetManager()  # Instantiating the manager
-    upload_datasets(config_path, manager)
+    upload_datasets(config_path, manager, args.overwrite)

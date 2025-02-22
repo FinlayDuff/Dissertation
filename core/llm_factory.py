@@ -16,6 +16,7 @@ class TaskType(Enum):
     BULK_SIGNALS = "bulk_signals"
     INDIVIDUAL_SIGNAL = "individual_signal"
     CRITIC = "critic"
+    SIGNAL_CRITIC = "signal_critic"
 
 
 class ClassificationResult(TypedDict):
@@ -142,8 +143,10 @@ class LLMFactory:
                 return LLMFactory._create_bulk_signals_detection(state)
             return LLMFactory._create_individual_signals_detection(state)
 
-        if node_name == "critic_decision":
-            return LLMFactory._create_critic(state)
+        if node_name == "critic_article_classification":
+            return LLMFactory._create_article_classification_critic(state)
+        if node_name == "critic_signal_classification":
+            return LLMFactory._create_signal_classification_critic(state)
 
         raise ValueError(f"Unknown node type: {node_name}")
 
@@ -226,22 +229,50 @@ class LLMFactory:
             for signal_name, signal_data in signals.items()
         }
 
+        task_prompt = f"{TASK_PROMPTS['zero_shot_classification_signals']}{json.dumps(signals_data_for_classification, indent=2)}"
+        followup_analysis = state.get("followup_signals_analysis", {})
+        if followup_analysis:
+            task_prompt += f"\n{TASK_PROMPTS['followup_analysis_classification_ext']}\n{followup_analysis}"
+
         config = LLMConfig.from_model_config(
             model_config,
-            task_prompt=f"{TASK_PROMPTS['zero_shot_classification']}\nUse these credibility signals:\n{json.dumps(signals_data_for_classification, indent=2)}",
+            task_prompt=task_prompt,
             task_type=TaskType.CLASSIFY_ARTICLE,
             structured_output=STRUCTURED_OUTPUTS["article_classification"],
         )
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
-    def _create_critic(state: State) -> Tuple[Any, str]:
+    def _create_article_classification_critic(state: State) -> Tuple[Any, str]:
         model_config = LLMFactory._get_model_config(state, "critic")
         config = LLMConfig.from_model_config(
             model_config,
-            task_prompt=TASK_PROMPTS["critic"],
+            task_prompt=TASK_PROMPTS["critic_article_classification"],
             task_type=TaskType.CRITIC,
             structured_output=STRUCTURED_OUTPUTS["critic"],
+        )
+        return LLMFactory._initialize_llm(config)
+
+    @staticmethod
+    def _create_signal_classification_critic(state: State) -> Tuple[Any, str]:
+        # This is consistent no matter what's being critiqued
+        model_config = LLMFactory._get_model_config(state, "critic")
+        signals = state.get("credibility_signals", {})
+        signals_data_for_classification = {
+            signal_name: {
+                **signal_data,
+                "prompt": CREDIBILITY_SIGNALS.get(signal_name, {}).get("prompt"),
+            }
+            for signal_name, signal_data in signals.items()
+        }
+
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["signal_classification_critic"].format(
+                signals_list=json.dumps(signals_data_for_classification, indent=2)
+            ),
+            task_type=TaskType.SIGNAL_CRITIC,
+            structured_output=STRUCTURED_OUTPUTS["signal_classification_critic"],
         )
         return LLMFactory._initialize_llm(config)
 
@@ -283,6 +314,24 @@ class LLMFactory:
             return None
 
     @staticmethod
+    def _parse_signals_critic(content: str):
+        try:
+            data = json.loads(content)
+            signals = data.get("signals", {})
+
+            # Check each signal has required fields
+            for signal_name, signal_data in signals.items():
+                if not all(key in signal_data for key in ["label", "explanation"]):
+                    print("Failed to parse content due to missing keys", content)
+                    return None
+
+            return {"signals_critiques": signals}
+
+        except json.JSONDecodeError:
+            print("Failed to parse content due JSON error", content)
+            return None
+
+    @staticmethod
     def _parse_signal(content: str) -> SignalResult:
         try:
             data = json.loads(content)
@@ -308,6 +357,7 @@ class LLMFactory:
 
             # Check that all required credibility signals are present
             if not all(signal in signals for signal in CREDIBILITY_SIGNALS):
+                print("Failed to parse content due to missing signals", content)
                 return None
 
             # Check each signal has required fields
@@ -315,13 +365,16 @@ class LLMFactory:
                 if not all(
                     key in signal_data for key in ["label", "confidence", "explanation"]
                 ):
+                    print("Failed to parse content due to missing keys", content)
                     return None
+
                 # Convert confidence to float if needed
                 signals[signal_name]["confidence"] = float(signal_data["confidence"])
 
             return {"signals": signals}
 
         except json.JSONDecodeError:
+            print("Failed to parse content due to faulty JSON", content)
             return None
 
     @staticmethod
@@ -354,6 +407,8 @@ class LLMFactory:
                     parsed = LLMFactory._parse_signal(content)
                 elif config.task_type == TaskType.CRITIC:
                     parsed = LLMFactory._parse_critic(content)
+                elif config.task_type == TaskType.SIGNAL_CRITIC:
+                    parsed = LLMFactory._parse_signals_critic(content)
                 else:
                     raise ValueError(f"Unknown task type: {config.task_type}")
 

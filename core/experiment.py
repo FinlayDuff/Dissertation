@@ -51,7 +51,9 @@ class Experiment:
         self._verbose = verbose
 
         # Initialize components
-        self.detection_system = MisinformationDetection()
+        self.detection_system = MisinformationDetection(
+            verbose=verbose,
+        )
         self.graph_manager = GraphManager(
             detection_system=self.detection_system,
             verbose=verbose,

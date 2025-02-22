@@ -189,6 +189,37 @@ EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
             "metrics": ["accuracy", "precision", "recall", "f1"],
         },
     },
+    "bulk_signals_claude_3_5_haiku": {
+        "description": "All Claude 3.5 Haiku experiment with bulk signals",
+        "max_concurrency": 5,
+        "classification_model": {
+            "model_name": "claude-3-5-haiku-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals_model": {
+            "model_name": "claude-3-5-haiku-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "critic_model": {
+            "model_name": "claude-3-5-haiku-20241022",
+            "temperature": 0.1,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals": {
+            "enabled": True,
+            "use_bulk": True,
+        },
+        "evaluation": {
+            "few_shot": False,
+            "few_shot_examples": None,
+            "metrics": ["accuracy", "precision", "recall", "f1"],
+        },
+    },
     "mixed_models": {
         "description": "Using different models for different tasks",
         "max_concurrency": 2,

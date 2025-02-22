@@ -28,11 +28,12 @@ def main(
     )
 
     # Run evaluation
-    results = experiment.run_evaluation(dataset_name)
-
+    experiment.run_evaluation(dataset_name)
     if verbose:
         print(f"Experiment {experiment_name} completed.")
         print(f"Results saved to results directory.")
+
+    return
 
 
 if __name__ == "__main__":
