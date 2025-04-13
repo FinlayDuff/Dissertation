@@ -18,7 +18,7 @@ from core.llm_factory import LLMFactory
 from core.state import State
 from config.signals import CREDIBILITY_SIGNALS
 from utils.langchain.llm_model_selector import retry_on_rate_limit
-from transformers import pipeline
+from core.followup_analysis_tools import FOLLOWUP_TOOLS
 
 
 class MisinformationDetection:
@@ -61,17 +61,7 @@ class MisinformationDetection:
             ValueError: If required state fields are missing
         """
         llm = LLMFactory.create_for_node("classify_article", state)
-        response = llm.invoke(
-            [
-                {
-                    "role": "user",
-                    "content": f"""
-                Title: {state['article_title']}
-                Content: {state['article_content']}
-            """,
-                },
-            ]
-        )
+        response = llm.invoke()
 
         state["messages"] = [response.raw_content]
         if response.parsed_content:
@@ -111,17 +101,7 @@ class MisinformationDetection:
         """
         llm = LLMFactory.create_for_node("detect_credibility_signals", state)
 
-        response = llm.invoke(
-            [
-                {
-                    "role": "user",
-                    "content": f"""
-                Title: {state['article_title']}
-                Content: {state['article_content']}
-            """,
-                },
-            ]
-        )
+        response = llm.invoke()
 
         state["messages"] = [response.raw_content]
         if response.parsed_content:
@@ -147,17 +127,7 @@ class MisinformationDetection:
             state["current_signal"] = signal_type
             llm = LLMFactory.create_for_node("detect_credibility_signals", state)
 
-            response = llm.invoke(
-                [
-                    {
-                        "role": "user",
-                        "content": f"""
-                    Title: {state['article_title']}
-                    Content: {state['article_content']}
-                """,
-                    },
-                ]
-            )
+            response = llm.invoke()
 
             messages.append(response.raw_content)
             if response.parsed_content:
@@ -219,17 +189,7 @@ class MisinformationDetection:
         """
         llm = LLMFactory.create_for_node("critic_signal_classification", state)
 
-        response = llm.invoke(
-            [
-                {
-                    "role": "user",
-                    "content": f"""
-                Title: {state['article_title']}
-                Content: {state['article_content']}
-            """,
-                },
-            ]
-        )
+        response = llm.invoke()
 
         state["messages"] = [response.raw_content]
         if response.parsed_content:
@@ -248,19 +208,12 @@ class MisinformationDetection:
         """
         signals_critiques = state.get("signals_critiques", {})
 
-        # Define a mapping from signal names to their follow-up tools
-        followup_tools = {
-            # "bias": self.bias_classifier,
-            # "sources": self.detection_system.rag_tool,
-            # Add additional mappings for other signals as needed.
-        }
-
         followup_results = {}
         for signal_name in signals_critiques:
             # Only process signals that are flagged for review
             if (
                 signals_critiques[signal_name]["label"] == "TRUE"
-                and signal_name in followup_tools
+                and signal_name in FOLLOWUP_TOOLS
             ):
                 if self.verbose:
                     print(
@@ -268,23 +221,24 @@ class MisinformationDetection:
                     )
 
                 # Determine the appropriate tool for the signal.
-                followup_tool = followup_tools.get(signal_name)
-                if followup_tool:
+                followup_tool = FOLLOWUP_TOOLS[signal_name]
+                if followup_tool["method"] != "llm":
                     # Run the follow-up tool; assume it updates and returns the state.
-                    result = followup_tool(state)
+                    result = followup_tool["method"](state)
                     followup_results[signal_name] = result
+                elif followup_tool["method"] == "llm":
+                    state["current_signal"] = signal_name
+                    llm = LLMFactory.create_for_node("followup_analysis", state)
+
+                    response = llm.invoke()
+
+                    state["messages"] = [response.raw_content]
+                    if response.parsed_content:
+                        response.parsed_content["analysis_type"] = "llm"
+                        followup_results[signal_name] = response.parsed_content
                 else:
                     if self.verbose:
                         print(f"No follow-up tool configured for signal: {signal_name}")
         if followup_results:
             state["followup_signals_analysis"] = followup_results
         return state
-
-    def bias_classifier(self, state: State):
-        """
-        Classifies bias in the article content using a pre-trained model.
-        """
-        pipe = pipeline("text-classification", model="valurank/distilroberta-bias")
-        article_content = state.get("article_content", "")
-        result = pipe(article_content)
-        return {"analysis_type": "roBERTa-bias-classification", "results": result}

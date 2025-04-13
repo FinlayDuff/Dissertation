@@ -1,52 +1,43 @@
 import os
 from utils.data.csv_parsing import load_csv_as_dataframe
-from utils.data.langsmith_dataset import LangsmithDatasetManager
+from utils.data.langsmith_dataset import LangsmithDatasetManager, get_manager
 from utils.utils import load_config
 import pandas as pd
 import argparse
 
-
-def balance_dataset_to_row_count(df, label_column, row_count):
-    # Calculate rows per label
-    unique_labels = df[label_column].nunique()
-    rows_per_label = row_count // unique_labels
-
-    # Sample rows_per_label rows from each label
-    balanced_df = (
-        df.groupby(label_column)
-        .apply(lambda x: x.sample(n=rows_per_label, random_state=42))
-        .reset_index(drop=True)
-    )
-
-    # Handle cases where exact row_count isn't possible due to uneven division
-    if len(balanced_df) < row_count:
-        # Sample additional rows to meet row_count
-        extra_needed = row_count - len(balanced_df)
-        extra_samples = df.sample(n=extra_needed, random_state=42)
-        balanced_df = pd.concat([balanced_df, extra_samples]).reset_index(drop=True)
-
-    return balanced_df
+from utils.data import TRANSFORM_FUNCTIONS
 
 
-# Function to load a dataset based on the config
-def upload_dataset(dataset_info, dataset_manager):
+def upload_dataset(dataset_info: dict, dataset_manager: LangsmithDatasetManager):
 
     name = dataset_info["name"]
     path = dataset_info["path"]
-    row_count = dataset_info.get("row_count")
+    transform_key = dataset_info.get("transform")
+    total_samples = dataset_info.get("total_samples", None)
 
     dataset_path = os.getcwd() + path
 
-    # Load the dataset
+    # Apply transformation if specified
+    if transform_key and transform_key in TRANSFORM_FUNCTIONS:
+        transform_func = TRANSFORM_FUNCTIONS[transform_key]
+        print(f"Transforming dataset '{name}' with total_samples={total_samples}")
+        transformed_file_path = transform_func(
+            dataset_path=dataset_path,
+            total_samples=total_samples,
+        )
+    else:
+        print(f"No transform function specified. Using raw path for dataset '{name}'.")
+
+    # Load transformed CSV (will have few_shot column if requested)
     print(f"Loading dataset {name} into memory")
-    df = load_csv_as_dataframe(dataset_path)
+    df = load_csv_as_dataframe(transformed_file_path)
+    df = df[dataset_info["input_keys"] + dataset_info["output_keys"]]
+    size_mb = df.memory_usage(deep=True).sum() / 1e6
+    if size_mb > 20:
+        raise RuntimeError(
+            f"Dataset too large ({size_mb:.2f}MB). LangSmith max is 20MB."
+        )
 
-    if row_count:
-        # Balance the dataset to the desired row count
-        print(f"Balancing dataset {name} to {row_count} rows")
-        df = balance_dataset_to_row_count(df, "label", row_count)
-
-    # Uploading dataset to Langsmith
     print(f"Uploading dataset {name} into LangSmith")
     dataset_manager.upload_dataset(
         df=df,
@@ -56,16 +47,38 @@ def upload_dataset(dataset_info, dataset_manager):
         description=dataset_info["description"],
     )
 
+    chunk_size = dataset_info.get("chunk_size", None)
+    if chunk_size:
+
+        dataset_manager.split_dataset_manual(
+            df=df,
+            dataset_name=name,
+            input_keys=dataset_info["input_keys"],
+            output_keys=dataset_info["output_keys"],
+            chunk_size=chunk_size,
+            description=dataset_info["description"],
+        )
+
 
 # Function to load all datasets defined in the config
 def upload_datasets(config_file, dataset_manager, overwrite=False):
     config = load_config(config_file)
     current_datasets_dict = dataset_manager.get_current_datasets()
     for dataset_info in config["datasets"]:
-        if dataset_info["name"] in current_datasets_dict.keys():
+        base_name = dataset_info["name"]
+        if base_name in current_datasets_dict.keys():
             if overwrite:
                 print(f"Deleting dataset {dataset_info['name']} from LangSmith")
-                dataset_manager.delete_dataset(dataset_info["name"])
+                dataset_manager.delete_dataset(base_name)
+                # Delete chunked datasets
+                chunked_names = [
+                    name
+                    for name in current_datasets_dict
+                    if name.startswith(f"{base_name} [chunk")
+                ]
+                for chunk_name in chunked_names:
+                    print(f"[INFO] Deleting chunked dataset: {chunk_name}")
+                    dataset_manager.delete_dataset(chunk_name)
                 upload_dataset(dataset_info, dataset_manager)
             else:
                 print("Dataset already exists and overwrite == False. Skipping upload.")
@@ -84,5 +97,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config_path = "config/datasets.yml"
-    manager = LangsmithDatasetManager()  # Instantiating the manager
+    manager = get_manager()  # Instantiating the manager
     upload_datasets(config_path, manager, args.overwrite)

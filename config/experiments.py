@@ -32,71 +32,133 @@ class ExperimentConfig(TypedDict):
 
 
 EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
-    "baseline_gpt4": {
-        "description": "All GPT-4 baseline experiment",
+    "zero_shot_gpt4": {
+        "description": "GPT-4 zero_shot experiment",
+        "max_concurrency": 5,
         "classification_model": {
             "model_name": "gpt-4o-mini-2024-07-18",
             "temperature": 0.0,
             "local": False,
             "timeout": 300,
-        },
-        "signals_model": {
-            "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.0,
-            "local": False,
-            "timeout": 300,
-        },
-        "critic_model": {
-            "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.1,
-            "local": False,
-            "timeout": 300,
-        },
-        "signals": {
-            "enabled": False,
-            "use_bulk": False,
-            "signals_to_detect": [
-                "bias",
-                "emotion",
-                "source_credibility",
-                "language_complexity",
-            ],
-        },
-        "evaluation": {
-            "few_shot": False,
-            "few_shot_examples": None,
-            "metrics": ["accuracy", "precision", "recall", "f1"],
         },
     },
-    "baseline_claude_3_5_haiku": {
-        "description": "All Claude 3.5 Haiku baseline experiment",
+    "few_shot_gpt4": {
+        "description": "All GPT-4 few shot experiment",
+        "max_concurrency": 5,
+        "classification_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "few_shot": True,
+    },
+    "zero_shot_claude": {
+        "description": "Claude 3.5 Haiku zero_shot experiment",
         "classification_model": {
             "model_name": "claude-3-5-haiku-20241022",
             "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
+    },
+    "bulk_signals_gpt4": {
+        "description": "All GPT-4 experiment with bulk signals",
+        "max_concurrency": 5,
+        "classification_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
         "signals_model": {
-            "model_name": "claude-3-5-haiku-20241022",
+            "model_name": "gpt-4o-mini-2024-07-18",
             "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
         "critic_model": {
-            "model_name": "claude-3-5-haiku-20241022",
-            "temperature": 0.1,
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
         "signals": {
-            "enabled": False,
-            "use_bulk": False,
+            "enabled": True,
+            "use_bulk": True,
         },
-        "evaluation": {
-            "few_shot": False,
-            "few_shot_examples": None,
-            "metrics": ["accuracy", "precision", "recall", "f1"],
+    },
+    "bulk_signals_followup_gpt4": {
+        "description": "All GPT-4 experiment with bulk signals and followup",
+        "max_concurrency": 5,
+        "classification_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
         },
+        "signals_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "critic_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals": {
+            "enabled": True,
+            "use_bulk": True,
+            "critic": True,
+            "followup": True,
+        },
+    },
+    "bulk_signals_few_shot_gpt4": {
+        "description": "All GPT-4 experiment with bulk signals and few-shot",
+        "classification_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "critic_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals": {
+            "enabled": True,
+            "use_bulk": True,
+        },
+        "few_shot": True,
     },
     "individual_signals_claude_3_5_haiku": {
         "description": "All Claude 3.5 Haiku experiment with individual signals",
@@ -115,7 +177,13 @@ EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
         },
         "critic_model": {
             "model_name": "claude-3-5-haiku-20241022",
-            "temperature": 0.1,
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
@@ -145,43 +213,19 @@ EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
         },
         "critic_model": {
             "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.1,
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
         "signals": {
             "enabled": True,
             "use_bulk": False,
-        },
-        "evaluation": {
-            "few_shot": False,
-            "few_shot_examples": None,
-            "metrics": ["accuracy", "precision", "recall", "f1"],
-        },
-    },
-    "bulk_signals_gpt4": {
-        "description": "All GPT-4 experiment with bulk signals",
-        "classification_model": {
-            "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.0,
-            "local": False,
-            "timeout": 300,
-        },
-        "signals_model": {
-            "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.0,
-            "local": False,
-            "timeout": 300,
-        },
-        "critic_model": {
-            "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.1,
-            "local": False,
-            "timeout": 300,
-        },
-        "signals": {
-            "enabled": True,
-            "use_bulk": True,
         },
         "evaluation": {
             "few_shot": False,
@@ -206,7 +250,86 @@ EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
         },
         "critic_model": {
             "model_name": "claude-3-5-haiku-20241022",
-            "temperature": 0.1,
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "claude-3-5-sonnet-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals": {
+            "enabled": True,
+            "use_bulk": True,
+        },
+        "evaluation": {
+            "few_shot": False,
+            "few_shot_examples": None,
+            "metrics": ["accuracy", "precision", "recall", "f1"],
+        },
+    },
+    "bulk_signals_claude_3_5_sonnet": {
+        "description": "All Claude 3.5 Sonnet experiment with bulk signals",
+        "max_concurrency": 5,
+        "classification_model": {
+            "model_name": "claude-3-5-sonnet-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals_model": {
+            "model_name": "claude-3-5-sonnet-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "critic_model": {
+            "model_name": "claude-3-5-sonnet-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "followup_model": {
+            "model_name": "claude-3-5-sonnet-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals": {
+            "enabled": True,
+            "use_bulk": True,
+        },
+        "evaluation": {
+            "few_shot": False,
+            "few_shot_examples": None,
+            "metrics": ["accuracy", "precision", "recall", "f1"],
+        },
+    },
+    "bulk_signals_gpt4_claude3_5": {
+        "description": "All GPT-4 experiment with bulk signals",
+        "classification_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "signals_model": {
+            "model_name": "gpt-4o-mini-2024-07-18",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "critic_model": {
+            "model_name": "claude-3-5-haiku-20241022",
+            "temperature": 0.0,
+            "local": False,
+            "timeout": 300,
+        },
+        "critic_model": {
+            "model_name": "claude-3-5-haiku-20241022",
+            "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
@@ -231,13 +354,13 @@ EXPERIMENT_CONFIGS: Dict[str, ExperimentConfig] = {
         },
         "signals_model": {
             "model_name": "gpt-4",
-            "temperature": 0.1,
+            "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },
         "critic_model": {
             "model_name": "gpt-4o-mini-2024-07-18",
-            "temperature": 0.1,
+            "temperature": 0.0,
             "local": False,
             "timeout": 300,
         },

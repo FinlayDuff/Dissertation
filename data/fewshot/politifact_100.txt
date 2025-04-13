@@ -1,0 +1,18 @@
+Example:
+Article: "I had the longest judicial vacancy in the history of the United States."
+Classification: Not Misinformation
+
+
+Example:
+Article: "95 percent of teachers and principals are not implicated in the [Atlanta Public Schools cheating scandal] report at all."
+Classification: Not Misinformation
+
+
+Example:
+Article: "If we went back to the obesity rates that existed in 1980, that would save the Medicare system a trillion dollars."
+Classification: Misinformation
+
+
+Example:
+Article: Says Joe Biden stayed silent about violence at Black Lives Matter protests.
+Classification: Misinformation

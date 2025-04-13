@@ -14,6 +14,7 @@ from IPython.display import Image, display
 
 from core.misinformation_detection import MisinformationDetection
 from core.state import State
+from typing import Dict
 
 
 class GraphManager:
@@ -30,7 +31,10 @@ class GraphManager:
     """
 
     def __init__(
-        self, detection_system: MisinformationDetection, verbose: bool = False
+        self,
+        detection_system: MisinformationDetection,
+        experiment_config: Dict,
+        verbose: bool = False,
     ):
         """
         Initialize the graph manager.
@@ -44,6 +48,7 @@ class GraphManager:
             >>> manager = GraphManager(detector, verbose=True)
         """
         self.detection_system = detection_system
+        self._experiment_config = experiment_config
         self.verbose = verbose
 
         # Initialize graph with state schema
@@ -54,63 +59,71 @@ class GraphManager:
         self.stored_credibility_signals = []
         self.build_graph()
 
+    def _get_graph_configuration(self):
+        required_nodes = ["classify_article"]
+        direct_edges = [("classify_article", END)]
+        conditional_edges = []
+
+        signals_config = self._experiment_config.get("signals", {})
+        if signals_config.get("enabled", False):
+            required_nodes.append("detect_signals")
+            direct_edges.append((START, "detect_signals"))
+            if signals_config.get("critic", False):
+                required_nodes.append("critic_credibility_signals")
+                direct_edges.append(("detect_signals", "critic_credibility_signals"))
+                if signals_config.get("followup", False):
+                    required_nodes.append("run_followup_analysis")
+                    direct_edges.append(
+                        (
+                            "run_followup_analysis",
+                            "classify_article",
+                        )
+                    )
+                    conditional_edges.append(
+                        (
+                            "critic_credibility_signals",
+                            self.decide_signals_critic_path,
+                            {
+                                "classify_article": "classify_article",
+                                "run_followup_analysis": "run_followup_analysis",
+                            },
+                        )
+                    )
+                else:
+                    direct_edges.append(
+                        ("critic_credibility_signals", "classify_article")
+                    )
+            else:
+                direct_edges.append(("detect_signals", "classify_article"))
+
+        else:
+            direct_edges.append((START, "classify_article"))
+        return required_nodes, direct_edges, conditional_edges
+
     def build_graph(self) -> None:
         """Build the graph with clear paths to END."""
+        # All possible nodes
         nodes = {
             "classify_article": self.detection_system.classify_article,
             "detect_signals": self.detection_system.detect_signals,
             "critic_credibility_signals": self.detection_system.critic_signal_classification,
             "run_followup_analysis": self.detection_system.run_followup_analysis,
-            # "make_critic_decision": self.detection_system.make_critic_decision,
         }
 
-        # Add nodes
-        for name, func in nodes.items():
-            self.graph_builder.add_node(name, func)
+        required_nodes, direct_edges, conditional_edges = (
+            self._get_graph_configuration()
+        )
+        # Add nodes to graph
+        for node_name in required_nodes:
+            self.graph_builder.add_node(node_name, nodes[node_name])
 
-        # Fixed paths (no conditions)
-        direct_edges = [
-            ("detect_signals", "critic_credibility_signals"),
-            # ("classify_article", "make_critic_decision"),
-            (
-                "run_followup_analysis",
-                "classify_article",
-            ),
-            ("classify_article", END),
-        ]
-
+        # Add direct edges between nodes
         for start, end in direct_edges:
             self.graph_builder.add_edge(start, end)
 
-        # Conditional branching points
-        self.graph_builder.add_conditional_edges(
-            START,
-            self.decide_start_path,
-            {
-                "classify_article": "classify_article",
-                "detect_signals": "detect_signals",
-            },
-        )
-
-        #
-        self.graph_builder.add_conditional_edges(
-            "critic_credibility_signals",
-            self.decide_signals_critic_path,
-            {
-                "classify_article": "classify_article",
-                "run_followup_analysis": "run_followup_analysis",
-            },
-        )
-
-        # Final decision point - only place that can reach END
-        # self.graph_builder.add_conditional_edges(
-        #     "make_critic_decision",
-        #     self.decide_critic_path,
-        #     {
-        #         "run_followup_analysis": "run_followup_analysis",
-        #         "end": END,  # Use string "end" instead of END constant
-        #     },
-        # )
+        # Add conditional edges between nodes
+        for start, condition, edges in conditional_edges:
+            self.graph_builder.add_conditional_edges(start, condition, edges)
 
         self.graph = self.graph_builder.compile()
 
@@ -191,6 +204,7 @@ class GraphManager:
             ... }
             >>> results = manager.run_graph_on_example(example)
         """
+
         initial_state = {
             "messages": [],
             "article_title": example.get("article_title"),
@@ -215,8 +229,6 @@ class GraphManager:
             "label": final_state.get("label"),
             "confidence": final_state.get("confidence"),
             "explanation": final_state.get("explanation"),
-            "credibility_signals": final_state.get("credibility_signals"),
-            "critic_decision": final_state.get("critic_decision"),
         }
 
     def visualize_graph(self) -> None:

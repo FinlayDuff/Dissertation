@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Any, Tuple, Dict, TypedDict, List, Union
 from config.experiments import EXPERIMENT_CONFIGS, ModelConfig
-from config.prompts import TASK_PROMPTS, STRUCTURED_OUTPUTS
+from config.prompts import TASK_PROMPTS, STRUCTURED_OUTPUTS, USER_INPUT_PROMPT
 from config.signals import CREDIBILITY_SIGNALS
 import json
 
@@ -17,6 +17,7 @@ class TaskType(Enum):
     INDIVIDUAL_SIGNAL = "individual_signal"
     CRITIC = "critic"
     SIGNAL_CRITIC = "signal_critic"
+    FOLLOWUP_ANALYSIS = "followup_analysis"
 
 
 class ClassificationResult(TypedDict):
@@ -88,7 +89,6 @@ class LLMConfig:
         local: Whether to run model locally
         timeout: Maximum time in seconds for response
         structured_output: Expected JSON schema for output
-        few_shot_examples: List of example input/output pairs
     """
 
     task_prompt: str
@@ -98,9 +98,7 @@ class LLMConfig:
     local: bool = False
     timeout: int = 300
     structured_output: Optional[str] = None
-    few_shot_examples: Optional[Tuple[Dict[str, str], ...]] = (
-        None  # Changed from List to Tuple
-    )
+    user_content: Optional[str] = None
 
     @classmethod
     def from_model_config(
@@ -109,11 +107,8 @@ class LLMConfig:
         task_prompt: str,
         task_type: TaskType,
         structured_output: Optional[str] = None,
+        user_content: Optional[str] = None,
     ):
-        # Convert any mutable types to immutable
-        few_shot = model_config.get("few_shot_examples")
-        if few_shot:
-            few_shot = tuple(tuple(x.items()) for x in few_shot)
 
         return cls(
             task_prompt=task_prompt,
@@ -123,7 +118,7 @@ class LLMConfig:
             local=model_config["local"],
             timeout=model_config["timeout"],
             structured_output=structured_output,
-            few_shot_examples=few_shot,
+            user_content=user_content,
         )
 
 
@@ -148,6 +143,8 @@ class LLMFactory:
         if node_name == "critic_signal_classification":
             return LLMFactory._create_signal_classification_critic(state)
 
+        if node_name == "followup_analysis":
+            return LLMFactory._create_followup_signal_analysis(state)
         raise ValueError(f"Unknown node type: {node_name}")
 
     @staticmethod
@@ -167,6 +164,10 @@ class LLMFactory:
             task_prompt=TASK_PROMPTS["zero_shot_classification"],
             task_type=TaskType.CLASSIFY_ARTICLE,
             structured_output=STRUCTURED_OUTPUTS["article_classification"],
+            user_content=USER_INPUT_PROMPT["base_inputs"].format(
+                title=state["article_title"],
+                content=state["article_content"],
+            ),
         )
 
         return LLMFactory._initialize_llm(config)
@@ -174,45 +175,73 @@ class LLMFactory:
     @staticmethod
     def _create_few_shot_classification(state: State) -> Tuple[Any, str]:
         model_config = LLMFactory._get_model_config(state, "classification")
+
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+        
+
         examples = state.get("few_shot_examples", [])
+        user_content += USER_INPUT_PROMPT["few_shot_extension"].format(
+            few_shot_block=examples
+        )
+
         config = LLMConfig.from_model_config(
             model_config,
             task_prompt=TASK_PROMPTS["few_shot_classification"],
             task_type=TaskType.CLASSIFY_ARTICLE,
             structured_output=STRUCTURED_OUTPUTS["article_classification"],
+            user_content=user_content,
         )
-        config.few_shot_examples = examples
+
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
     def _create_individual_signals_detection(state: State) -> Tuple[Any, str]:
         model_config = LLMFactory._get_model_config(state, "signals")
-        signal_type = state.get("current_signal")
-        signal_config = CREDIBILITY_SIGNALS[signal_type]
 
-        task_prompt = TASK_PROMPTS["individual_signal"].format(
-            signal_type=signal_type, signal_config=signal_config
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+
+        signal_type = state.get("current_signal")
+        user_content += USER_INPUT_PROMPT["individual_signal_extension"].format(
+            signal_type=signal_type, signal_config=CREDIBILITY_SIGNALS[signal_type]
         )
 
         config = LLMConfig.from_model_config(
             model_config,
-            task_prompt=task_prompt,
+            task_prompt=TASK_PROMPTS["individual_signal"],
             task_type=TaskType.INDIVIDUAL_SIGNAL,
             structured_output=STRUCTURED_OUTPUTS["individual_signal"],
+            user_content=f"""
+                    Title: {state['article_title']}\n
+                    Content: {state['article_content']}
+                """,
         )
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
     def _create_bulk_signals_detection(state: State) -> Tuple[Any, str]:
         model_config = LLMFactory._get_model_config(state, "signals")
-        task_prompt = TASK_PROMPTS["bulk_signals"].format(
+        task_prompt = TASK_PROMPTS["bulk_signals"]
+
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+        user_content += USER_INPUT_PROMPT["bulk_signals_extension"].format(
             signals_list=json.dumps(CREDIBILITY_SIGNALS, indent=2)
         )
+
         config = LLMConfig.from_model_config(
             model_config,
             task_prompt=task_prompt,
             task_type=TaskType.BULK_SIGNALS,
             structured_output=STRUCTURED_OUTPUTS["bulk_signals"],
+            user_content=user_content,
         )
         return LLMFactory._initialize_llm(config)
 
@@ -223,34 +252,66 @@ class LLMFactory:
         signals = state.get("credibility_signals", {})
         signals_data_for_classification = {
             signal_name: {
-                **signal_data,
                 "prompt": CREDIBILITY_SIGNALS.get(signal_name, {}).get("prompt"),
+                **signal_data,
             }
             for signal_name, signal_data in signals.items()
         }
 
-        task_prompt = f"{TASK_PROMPTS['zero_shot_classification_signals']}{json.dumps(signals_data_for_classification, indent=2)}"
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+        if signals_data_for_classification:
+            user_content += USER_INPUT_PROMPT["classified_signals_extension"].format(
+                signals_list=json.dumps(signals_data_for_classification, indent=2)
+            )
+
+        critic_list = state.get("signals_critiques", {})
+        if critic_list:
+            user_content += USER_INPUT_PROMPT["critic_extension"].format(
+                critic_list=json.dumps(critic_list, indent=2)
+            )
+
         followup_analysis = state.get("followup_signals_analysis", {})
         if followup_analysis:
-            task_prompt += f"\n{TASK_PROMPTS['followup_analysis_classification_ext']}\n{followup_analysis}"
+            user_content += USER_INPUT_PROMPT[
+                "followup_analysis_classification_extension"
+            ].format(followup_analysis=json.dumps(followup_analysis, indent=2))
+
+        task_prompt = TASK_PROMPTS["zero_shot_classification_signals"]
+
+        examples = state.get("few_shot_examples", [])
+        if examples:
+            task_prompt = TASK_PROMPTS["few_shot_classification_signals"]
+            user_content += USER_INPUT_PROMPT["few_shot_extension"].format(
+                few_shot_block=examples
+            )
 
         config = LLMConfig.from_model_config(
             model_config,
             task_prompt=task_prompt,
             task_type=TaskType.CLASSIFY_ARTICLE,
             structured_output=STRUCTURED_OUTPUTS["article_classification"],
+            user_content=user_content,
         )
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
     def _create_article_classification_critic(state: State) -> Tuple[Any, str]:
         model_config = LLMFactory._get_model_config(state, "critic")
+
         config = LLMConfig.from_model_config(
             model_config,
             task_prompt=TASK_PROMPTS["critic_article_classification"],
             task_type=TaskType.CRITIC,
             structured_output=STRUCTURED_OUTPUTS["critic"],
+            user_content=f"""
+                    Title: {state['article_title']}\n
+                    Content: {state['article_content']}
+                """,
         )
+
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
@@ -266,14 +327,58 @@ class LLMFactory:
             for signal_name, signal_data in signals.items()
         }
 
+        user_content = USER_INPUT_PROMPT[
+            "signal_classification_critic_extension"
+        ].format(signals_list=json.dumps(signals_data_for_classification, indent=2))
+
         config = LLMConfig.from_model_config(
             model_config,
-            task_prompt=TASK_PROMPTS["signal_classification_critic"].format(
-                signals_list=json.dumps(signals_data_for_classification, indent=2)
-            ),
+            task_prompt=TASK_PROMPTS["signal_classification_critic"],
             task_type=TaskType.SIGNAL_CRITIC,
             structured_output=STRUCTURED_OUTPUTS["signal_classification_critic"],
+            user_content=user_content,
         )
+
+        return LLMFactory._initialize_llm(config)
+
+    @staticmethod
+    def _create_followup_signal_analysis(state: State) -> Any:
+        """
+        Creates LLM configuration for detailed follow-up analysis of a specific credibility signal.
+
+        Args:
+            state: Current state containing article and signal information
+            signal_name: Name of the signal being analyzed
+        """
+        model_config = LLMFactory._get_model_config(state, "followup")
+
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+
+        signal_type = state.get("current_signal")
+        signal_classification = state.get("credibility_signals", {}).get(
+            signal_type, {}
+        )
+        critic_explanation = (
+            state.get("signals_critiques", {}).get(signal_type, {}).get("explanation")
+        )
+
+        user_content += USER_INPUT_PROMPT["followup_analysis_signals_extension"].format(
+            signal_type=signal_type,
+            signal_classification=json.dumps(signal_classification, indent=2),
+            critic_explanation=critic_explanation,
+        )
+
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["followup_analysis"],
+            task_type=TaskType.FOLLOWUP_ANALYSIS,
+            structured_output=STRUCTURED_OUTPUTS["followup_analysis"],
+            user_content=user_content,
+        )
+
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
@@ -385,10 +490,19 @@ class LLMFactory:
 
         # Create a subclass that wraps the invoke method
         class WrappedLLM(type(llm)):
-            def invoke(self, user_input):
+            def invoke(self):
 
-                system_prompt = config.task_prompt + config.structured_output
-                message = [{"role": "system", "content": system_prompt}] + user_input
+                message = [
+                    {
+                        "role": "system",
+                        "content": config.task_prompt + config.structured_output,
+                    }
+                ] + [
+                    {
+                        "role": "user",
+                        "content": config.user_content,
+                    },
+                ]
                 response = super().invoke(message)
 
                 if hasattr(response, "content"):
@@ -409,6 +523,8 @@ class LLMFactory:
                     parsed = LLMFactory._parse_critic(content)
                 elif config.task_type == TaskType.SIGNAL_CRITIC:
                     parsed = LLMFactory._parse_signals_critic(content)
+                elif config.task_type == TaskType.FOLLOWUP_ANALYSIS:
+                    parsed = LLMFactory._parse_signal(content)
                 else:
                     raise ValueError(f"Unknown task type: {config.task_type}")
 

@@ -1,182 +1,189 @@
-# PROMPTS = {
-#     "direct_naive_zero_shot_classification": """
-#         You are a helpful and unbiased news verification assistant.
-#         You will be provided with the title and the full body of text of a news article.
-#         If you believe the article constitutes misinformation then output "0" and if you believe the article to be credible then output "1".
-#         In both cases, provide a confidence score to your classification between 0 and 1, where 0 indicates absolutely no confidence in your classification and 1 certainty in your classification, 0.5 represents an "informed guess". Your confidence should sit somewhere in this range.
-#         In both cases, provide a clear and concise explanation, citing specific reasons or sources where necessary.
-#     """,
-#     "direct_robust_zero_shot_classification": """
-#         You are a fact-checking expert tasked with evaluating the accuracy of the following news article. Assess the article based on its alignment with verified facts from reputable sources, including government reports, scientific studies, or established news organizations.
-#         If the article is factually accurate and well-supported by credible evidence, respond with "1". If the article contains any misleading, incorrect, or unverified information, respond with "0".
-#         In both cases, provide a confidence score to your classification between 0 and 1, where 0 indicates absolutely no confidence in your classification and 1 certainty in your classification, 0.5 represents an "informed guess". Your confidence should sit somewhere in this range.
-#         In both cases, provide a clear and concise explanation, citing specific reasons or sources where necessary.
-#     """,
-#     "direct_few_shot_classification": """
-#         You are a fact-checking expert tasked with evaluating the accuracy of the following article.
-#         If the article is factually accurate and well-supported by credible evidence, respond with "1". If the article contains any misleading, incorrect, or unverified information, respond with "0".
-#        In both cases, provide a confidence score to your classification between 0 and 1, where 0 indicates absolutely no confidence in your classification and 1 certainty in your classification, 0.5 represents an "informed guess". Your confidence should sit somewhere in this range.
-#         In both cases, provide a clear and concise explanation, citing specific reasons or sources where necessary.
-
-#         Here are some examples:
-
-#         Example 1:
-#         Article: "Eating chocolate every day has been proven to cure cancer in multiple studies. Scientists recommend everyone to include chocolate in their daily diet to stay cancer-free."
-#         Label: Fake
-#         Explanation: The claim that eating chocolate can cure cancer is unsupported and misleading. There is no credible scientific evidence to back this assertion, and such a statement contradicts well-established cancer research. The article also lacks citations from reputable medical sources to support the claims made.
-
-#         Example 2:
-#         Article: "The Mediterranean diet has been linked to a lower risk of heart disease in multiple studies. A report published by the American Heart Association highlights the benefits of this diet, which includes a high intake of fruits, vegetables, and olive oil."
-#         Label: Credible
-#         Explanation: The article is well-supported by evidence from reputable sources, including a report from the American Heart Association. Numerous studies have shown a link between the Mediterranean diet and lower heart disease risk, making the article's claims credible.
-
-#         Example 3:
-#         Article: "The only reason the government pushes for vaccinations is because they are in the pockets of big pharmaceutical companies, and they don't care about our health. It's all about profit and control."
-#         Label: Fake
-#         Explanation: This article contains strong bias and polarising language, suggesting a conspiracy without presenting credible evidence. It makes unfounded claims about government motivations and pharmaceutical companies, while also failing to provide any reputable sources to substantiate these accusations. The tone is divisive and lacks factual support.
-
-#         Example 4:
-#         Article: "Vaccines have been instrumental in eradicating diseases like smallpox, and the World Health Organization (WHO) continues to recommend vaccinations for preventing outbreaks of diseases such as measles and polio."
-#         Label: Credible
-#         Explanation: This article is based on verifiable historical facts and aligns with the consensus of public health authorities like the WHO. The role of vaccines in eradicating smallpox and controlling diseases like measles and polio is well-documented in scientific and medical literature, making this article credible.
-
-#         Example 5:
-#         Article: "You must stop using mobile phones immediately! Studies have shown that radiation from mobile phones is killing millions of brain cells daily. Protect yourself by switching off your devices permanently."
-#         Label: Fake
-#         Explanation: The claim that mobile phone radiation kills millions of brain cells daily is exaggerated and unsupported by credible scientific evidence. While there are ongoing studies on mobile phone radiation, reputable organisations such as the World Health Organization (WHO) have not confirmed any such drastic health risks. Additionally, the article uses a fear-based call to action without proper substantiation.
-
-#         Example 6:
-#         Article: "While research on mobile phone radiation is ongoing, the World Health Organization (WHO) has classified it as 'possibly carcinogenic'. However, current evidence does not conclusively prove that mobile phone use is harmful to human health, and further studies are needed."
-#         Label: Credible
-#         Explanation: This article presents a balanced and factual report, acknowledging both the ongoing research and the current classification by the WHO. It avoids exaggeration and provides a well-supported explanation, making it credible.
-
-#         Now evaluate the following article:""",
-#     "credibility_signals": {
-#         "evidence": "Does this text fail to present any supporting evidence or arguments to substantiate its claims?",
-#         "bias": "Does this text contain explicit or implicit biases, such as confirmation bias, selection bias, or framing bias?",
-#         "inference": "Does this text make claims about correlation and causation?",
-#         "polarising_language": "Does this text use polarising terms or create divisions into sharply contrasting groups, opinions, or beliefs?",
-#         "document_citation": "Does this text lack citations of studies or documents to support its claims?",
-#         "informal_tone": "Does this text use informal tone elements like all caps, consecutive exclamation marks, or question marks?",
-#         "explicitly_unverified_claims": "Does this text contain claims that explicitly lack confirmation?",
-#         "personal_perspective": "Does this text include the author’s personal opinions rather than factual reporting?",
-#         "emotional_valence": "Does the language of this text carry strong emotional valence, either predominantly negative or positive, rather than being neutral?",
-#         "call_to_action": "Does this text contain language that can be interpreted as a call to action, telling readers what to do or follow through with a specific task?",
-#         "expert_citation": "Does this text lack citations of experts in the subject?",
-#         "clickbait": "Does this text's title contain sensationalised or misleading headlines to attract clicks?",
-#         "incorrect_spelling": "Does this text contain significant misspellings and/or grammatical errors?",
-#         "misleading_about_content": "Does this text's title emphasise different information than the body topic?",
-#         "incivility": "Does this text use stereotypes and/or generalisations of groups of people?",
-#         "impoliteness": "Does this text contain insults, name-calling, or profanity?",
-#         "sensationalism": "Does this text present information in a manner designed to evoke strong emotional reactions?",
-#         "source_credibility": "Does this text cite low-credibility sources?",
-#         "reported_by_other_sources": "Does this text present a story that was not reported by other reputable media outlets?",
-#     },
-# }
-# STRUCTURED_OUTPUT_PROMPT_ARTICLE = """
-#         Your output should follow this format:
-#         Label: <0|1>
-#         Confidence:  <Float in range (0,1)>.
-#         Explanation: <Explanation>
-#     """
-
-# STRUCTURED_OUTPUT_PROMPT_SIGNAL = """
-#         Your output should follow this format:
-#         Credibility Signal: <signal_name>
-#         Label: <0|1>
-#         Confidence:  <Float in range (0,1)>.
-#         Explanation: <Explanation>
-#     """
-
-# CREDIBILITY_SIGNALS_CLASSIFCIATION = """
-#     You are a helpful and unbiased news verification assistant.
-#     You will be provided with the title and the full body of text of a news article.
-#     Your task is to determine the credibility signals of the article  by answering the credibility signal questions as Yes(1) or No(0).
-#     Provide a confidence score to your classification between 0 and 1, where 0 indicates a complete guess and 1 indicates absolute certainty in your classification.
-#     Additionally, provide a clear and concise explanation for your classification.
-#     Do not output any additional information.
-# """
-
-from typing import Dict, Any
-
-STRUCTURED_OUTPUTS = {
-    "article_classification": """Your Output must be strictly formatted as below. No additional text is allowed.
-        {
-           "label": int, 'Fake=0 or Credible=1'
-            "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
-            "explanation": str, 'Bullet point reasoning behind the classification.'
-        }""",
-    "bulk_signals": """Your Output must be strictly formatted in JSON as below. No additional text is allowed.
-        EACH SIGNAL MUST BE CLASSIFIED IN YOUR RESPONSE. THERE ARE 19 signals.
-        ENSURE THAT IT IS VALID JSON.
-        {
-            "signals": {
-                "signal_name": {
-                    "label": int, 'False=0 or True=1'
-                    "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
-                    "explanation": str, 'Bullet point reasoning behind the classification.'
-                }
-            }
-        }""",
-    "individual_signal": """Your Output must be strictly formatted in JSON as below. No additional text is allowed. 
-        {
-            "label": int, 'False=0 or True=1'
-            "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
-            "explanation": str, 'Bullet point reasoning behind the classification.'
-        }""",
-    "critic": """Your Output must be strictly formatted in JSON as below. No additional text is allowed.
-        {
-            "label": str, 'TRUE or FALSE'
-            "explanation": str, 'Bullet point reasoning behind the critic decision.'
-        }""",
-    "signal_classification_critic": """Your Output must be strictly formatted in JSON as below. No additional text is allowed.
-        {
-            "signals": {
-                "signal_name": {
-                "label": str, 'TRUE or FALSE'
-                "explanation": str, 'Bullet point reasoning behind the critic decision.'
-                }
-            }
-        }""",
-}
-
 TASK_PROMPTS = {
-    "default": "Default system prompt for general tasks.",
-    "few_shot_classification": "Classify the article as Credible or Fake.",
-    "critic": """Evaluate if a model needs to be called. Based on the text 
-        Return TRUE if confidence is low or signals are unclear.
-        Return FALSE otherwise.
-        """,
-    "zero_shot_classification": """You are an expert at detecting misinformation in articles.
-        Task: Classify the provided article with a label of 1 for Credible or 0 for Fake.
-        Provide a confidence score for your classification and a detailed explanation.
+    "few_shot_classification": """
+You are an expert in detecting misinformation in full-length news articles.
 
-        """,
-    "zero_shot_classification_signals": """You are an expert at detecting misinformation in articles.
-        Task: Classify the provided article with a label of 1 for Credible or 0 for Fake.
-        Provide a confidence score for your classification and a detailed explanation.
-        The credibility signals of this article have been detected and are as follows:
+Your task is to classify whether a given article is *Fake* (0) or *Credible* (1).
+Use the few-shot examples provided as guidance for how such decisions are typically made.
+Consider patterns in emotional tone, bias, exaggeration, source credibility, or stylistic cues.
 
-        """,
-    "individual_signal": """You are analyzing articles for specific credibility signals.
-        Signal to detect: {signal_type}
-        {signal_config[prompt]}
+Always return a label (0 or 1), a confidence score between 0 and 1, and a brief explanation.
+Be sure to apply consistent criteria and avoid over-relying on any one feature.
+""",
+    "critic": """
+Evaluate if a model needs to be called. Based on the text 
+Return TRUE if confidence is low or signals are unclear.
+Return FALSE otherwise.
+    """,
+    "zero_shot_classification": """
+You are an expert at detecting misinformation in articles.
+Task: Classify the provided article with a label of 1 for Credible or 0 for Fake.
+Provide a confidence score for your classification and a detailed explanation.
+    """,
+    "zero_shot_classification_signals": """
+You are an expert at detecting misinformation in articles.
+An assistant has already detected credibility signals in the article and you should refer to them.
+Each signal has been classified as either TRUE or FALSE, with a confidence score and explanation.
+A critique of the signal classification has also been provided.
+Followup analysis is provided for signals where the critic deemed it necessary.
 
-        """,
-    "bulk_signals": """You are analyzing articles for multiple credibility signals.
-        TASK: Classify each of the following signals with a label of 1 for Credible or 0 for Fake.
-        Provide a confidence score for your classification and a detailed explanation.
-        EACH signal must be classified in your reponse.
-        {signals_list}
+All information provided should be considered in your final classification of the article.
+You must weigh the classification and reasoning of the signals, the critic's analysis, and the followup analysis to make your final determination.
+    """,
+    "few_shot_classification_signals": """
+You are an expert in identifying misinformation in articles.
 
+You are given:
+1. A set of **credibility signals** extracted from the article.
+2. A **critique** of those signal classifications.
+3. **Follow-up analysis** for any signals deemed ambiguous.
+4. A series of **example classifications** that illustrate how similar articles were judged.
+
+Each signal includes a TRUE/FALSE classification, a confidence score (0.0–1.0), and a short explanation.
+The critique highlights any potential issues in reasoning or confidence.
+Few-shot examples show how misinformation and credible articles differ in tone, language, bias, or source.
+
+Be sure to justify your decision by referencing both the signals and your general reasoning.
+    """,
+    "individual_signal": """
+You are an expert at detecting misinformation in articles by evaluating credibility signals. 
+For the signal provided, you must decide whether it is TRUE or FALSE, 
+provide a confidence score (range 0-1), and give a short bullet-point summary of your reasoning
+        """,
+    "bulk_signals": """
+You are an expert at detecting misinformation in articles by evaluating numerous credibility signals. 
+For each signal provided, you must decide whether it is TRUE or FALSE, 
+provide a confidence score (range 0-1), and give a short bullet-point summary of your reasoning
         """,
     "signal_classification_critic": """
-            You are evaluating whether the credibility signals have been correctly classified.
-            Task: Evaluate the classification of the following signals
-            {signals_list}
-            
+You are an expert reviewer of credibility signal classifications. 
+A classification model has provided initial classifications for an articles' credibility signals.
+For each signal, answer the question:
+"Based on provided explanation and confidence, does the credibility signal <signal> require additional analysis to support the current classification?"
+For example, a low confidence score or an unclear explanation may indicate that further analysis is needed.
         """,
-    "followup_analysis_classification_ext": """
-        Followup analysis on the credibility signals has been conducted and is output below:  
+    "followup_analysis": """
+You are conducting a detailed follow-up analysis of a credibility signal in an article.
+Your task is to:
+1. Thoroughly analyze the presence and significance of this signal
+2. Evaluate the strength and reliability of the signal
+3. Consider any potential false positives or ambiguities
+4. Provide a final determination with high confidence
+""",
+}
+
+STRUCTURED_OUTPUTS = {
+    "article_classification": """
+\n
+Instructions:
+1. Provide a single integer value for "label" (0 or 1).
+2. Provide a confidence score between 0 and 1.
+3. Provide a concise explanation (it can be in bullet-point form), focusing on the reasoning for your classification.
+4. Output must be strictly in valid JSON with the following structure (no extra text, no markdown):
+{
+    "label": int,            // Fake=0 or Credible=1
+    "confidence": float,     // A number between 0 and 1
+    "explanation": str       // A short, bullet-point summary of your reasoning
+}  
+    """,
+    "bulk_signals": """
+\n
+Instructions:
+1. You must classify *each* signal. 
+2. Output must be strictly in valid JSON with the following structure (no extra text, no markdown):
+{
+    "signals": {
+        "signal_name": {
+            "label": "TRUE or FALSE",
+            "confidence": "float (0-1)", How confident you are in the classification 
+            "explanation": "string", Bullet-point reasoning for the classification
+        },
+    }
+}
+    """,
+    "individual_signal": """
+    \n
+Your Output must be strictly formatted in JSON as below. No additional text is allowed. 
+{
+    "label": int, 'False or True'
+    "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
+    "explanation": str, 'Bullet point reasoning behind the classification.'
+}
+    """,
+    "critic": """
+\n
+Your Output must be strictly formatted in JSON as below. No additional text is allowed.
+{
+    "label": str, 'TRUE or FALSE'
+    "explanation": str, 'Bullet point reasoning behind the critic decision.'
+}
+    """,
+    "signal_classification_critic": """\n
+Instructions:
+1. Your task is to evalulate the current classification, not classify it yourself.
+2. 'TRUE' means further analysis is needed; 'FALSE' means no further analysis is needed.
+3. Explanation should justify the label choice in bullet points.
+4. Output must be strictly in valid JSON with the following structure (no extra text, no markdown):
+{
+    "signals": {
+        "signal_name": {
+            "label": "TRUE or FALSE",
+            "explanation": "string"
+        }
+    }
+}
+        """,
+    "followup_analysis": """\n
+Your Output must be strictly formatted in JSON as below. No additional text is allowed. 
+{
+    "label": int, 'False or True'
+    "confidence": float, 'Between 0 and 1. 0 indicates no confidence, 1 indicates high confidence.'
+    "explanation": str, 'Bullet point reasoning behind the classification.'
+}
+        """,
+}
+
+USER_INPUT_PROMPT = {
+    "base_inputs": "Article Title: {title}\nArticle Content: {content}",
+    "bulk_signals_extension": """
+\n
+Signals to detect:
+{signals_list}
+     """,
+    "individual_signal_extension": """
+\n
+Credibility Signal to detect: {signal_type}
+{signal_config[prompt]}
+     """,
+    "signal_classification_critic_extension": """
+\n
+Credibility Signals classifications to critique:
+{signals_list}
+     """,
+    "critic_extension": """
+\n
+The credibility classifications were critiqued and are provided below: 
+{critic_list}
+    """,
+    "followup_analysis_classification_extension": """
+\n
+Followup analysis on the credibility signals has been conducted and is output below: 
+{followup_analysis} 
+    """,
+    "classified_signals_extension": """
+\n 
+Credibility Signal classifications to be considered as part of the article classification:
+{signals_list}
+    """,
+    "followup_analysis_signals_extension": """
+\n
+An initial classifcation has been conducted on the following credibility signal: **{signal_type}**
+{signal_classification}
+A critic has evaluated the classification and determined that further analysis is needed with the following explanation:
+{critic_explanation}
+    """,
+    "few_shot_extension": """
+        \n
+Examples of other articles being classified as Minsinformation or Not Misinformation:
+{few_shot_block}
     """,
 }

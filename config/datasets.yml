@@ -1,74 +1,60 @@
 # config.yml
 datasets:
-  - name: "FA-KES"
-    description: "FA-KES news dataset of misinformation during the Syrian War"
-    path: "/data/transformed/FA-KES.csv"
-    input_keys:
-      - unit_id
-      - article_title
-      - article_content
-      - source
-      - date
-      - location
-    output_keys:
-      - label
-  - name: "FA-KES test"
-    description: "FA-KES news dataset of misinformation during the Syrian War"
-    path: "/data/transformed/FA-KES.csv"
-    input_keys:
-      - unit_id
-      - article_title
-      - article_content
-      - source
-      - date
-      - location
-    output_keys:
-      - label
-    row_count: 100
-  - name: "FA-KES debug"
-    description: "Dataset for debugging"
-    path: "/data/transformed/FA-KES.csv"
-    input_keys:
-      - unit_id
-      - article_title
-      - article_content
-      - source
-      - date
-      - location
-    output_keys:
-      - label
-    row_count: 5
-  - name: "ReCOVery News"
+  - name: "FA-KES_None"
+    description: "FA-KES"
+    path: "/data/raw/FA-KES.csv"
+    transform: "FA-KES"       
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    chunk_size: 50
+    
+
+  - name: "FA-KES_100"
+    description: "FA-KES (100 balanced rows)"
+    path: "/data/raw/FA-KES.csv"
+    transform: "FA-KES"      
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 100
+
+  - name: "FA-KES_10" 
+    description: "FA-KES (10 balanced rows)"
+    path: "/data/raw/FA-KES.csv"
+    transform: "FA-KES"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 10
+
+  - name: "recovery-news-data_None"
     description: "ReCOVery news dataset of misinformation during the COVID-19 pandemic"
-    path: "/data/transformed/recovery-news-data.csv"
-    input_keys:
-      - news_id
-      - article_title
-      - article_content
-      - publisher
-      - publish_date
-    output_keys:
-      - label
-  - name: "ReCOVery News test"
+    path: "/data/raw/recovery-news-data.csv"
+    transform: "recovery-news-data"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    chunk_size: 50
+    
+
+  - name: "recovery-news-data_100" 
     description: "ReCOVery news dataset of misinformation during the COVID-19 pandemic"
-    path: "/data/transformed/recovery-news-data.csv"
-    input_keys:
-      - news_id
-      - article_title
-      - article_content
-      - publisher
-      - publish_date
-    output_keys:
-      - label
-    row_count: 100
+    path: "/data/raw/recovery-news-data.csv"
+    transform: "recovery-news-data"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 100
+
   - name: "politifact"
     description: "Politifact news dataset of misinformation"
-    path: "/data/transformed/politifact.csv"
-    input_keys:
-      - article_title
-      - article_content
-      - statement_originator
-      - statement_source
-      - statement_date
-    output_keys:
-      - label
+    path: "/data/raw/politifact_factcheck_data.json"
+    transform: "politifact"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    chunk_size: 50
+    
+
+  - name: "politifact_100"
+    description: "Politifact news dataset of misinformation"  
+    path: "/data/raw/politifact_factcheck_data.json"
+    transform: "politifact"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 100
