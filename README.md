@@ -15,10 +15,17 @@ __Install poetry:__
 pip install poetry
 ```
 
-__Install dependencies:__
-```bash
-poetry install
-```
+__(Option 1) Quick-start__:
+To simplify installation, simply run ```make setup```.
+This will perform the following:
+1. Install the python packages and related dependencies
+2. Transform and upload the datasets to Langsmith
+3. Download all the hugging_face models
+
+__(Option 2) Run the make files separately:__
+e.g ```make install```
+
+
 
 ## Contents
 ```bash

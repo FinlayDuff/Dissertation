@@ -32,25 +32,32 @@ device = 0 if torch.backends.mps.is_available() else -1
 
 F = TypeVar("F", bound=Callable[..., Any])
 
+from openai import APIConnectionError, RateLimitError
+import httpx
+import logging
 
-def retry_on_rate_limit(
+logger = logging.getLogger(__name__)
+
+
+def retry_on_api_exceptions(
     max_retries: int = 10, backoff_factor: float = 1.0
 ) -> Callable[[F], F]:
     """
-    Decorator that implements exponential backoff retry logic for rate-limited API calls.
+    Decorator that retries on API rate limits and transient connection errors
+    using exponential backoff.
+
+    Retries on:
+    - openai.error.RateLimitError
+    - openai.APIConnectionError
+    - httpx.ConnectError
+    - TLS/SSL EOF errors (by string matching)
 
     Args:
-        max_retries: Maximum number of retry attempts before giving up
-        backoff_factor: Base factor for exponential backoff calculation
+        max_retries: Maximum number of retries
+        backoff_factor: Base delay factor
 
     Returns:
-        Decorated function that implements retry logic
-
-    Example:
-        @retry_on_rate_limit(max_retries=5, backoff_factor=2.0)
-        def api_call():
-            # Function that might hit rate limits
-            pass
+        Wrapped function with retry logic
     """
 
     def decorator(func: F) -> F:
@@ -60,26 +67,56 @@ def retry_on_rate_limit(
             while retries < max_retries:
                 try:
                     return func(*args, **kwargs)
+
                 except Exception as e:
-                    if any(
-                        err in str(e).lower()
-                        for err in ["rate_limit_error", "rate_limit_exceeded"]
-                    ):
+                    logging.error(f"Error occurred: {e}")
+                    error_str = str(e).lower()
+                    retriable = any(
+                        substr in error_str
+                        for substr in [
+                            "rate_limit_error",
+                            "rate limit exceeded",
+                            "tls",
+                            "ssl",
+                            "connection reset",
+                            "eof",
+                            "connection error",
+                            "apiconnectionerror",
+                            "connecterror",
+                        ]
+                    ) or isinstance(
+                        e,
+                        (
+                            RateLimitError,
+                            APIConnectionError,
+                            httpx.ConnectError,
+                        ),
+                    )
+
+                    if retriable:
                         retries += 1
                         sleep_time = backoff_factor * (2**retries) + random.uniform(
                             0, 1
                         )
-                        print(
-                            f"Rate limit error encountered. Retrying in {sleep_time:.2f} seconds..."
+                        logging.info(
+                            f"[Retry {retries}/{max_retries}] Retriable error: {error_str}. "
+                            f"Retrying in {sleep_time:.2f} seconds..."
                         )
                         time.sleep(sleep_time)
                     else:
                         raise e
+
             raise Exception(f"Max retries ({max_retries}) exceeded")
 
         return cast(F, wrapper)
 
     return decorator
+
+
+class CustomChatOpenAI(ChatOpenAI):
+    @retry_on_api_exceptions(max_retries=10, backoff_factor=1.0)
+    def _generate(self, *args, **kwargs):
+        return super()._generate(*args, **kwargs)
 
 
 # Provider initialization functions
@@ -88,7 +125,7 @@ PROVIDER_MAPPING: Dict[str, Callable[[ModelConfig], Any]] = {
         model=c.model_name,
         temperature=c.temperature,
     ),
-    "gpt": lambda c: ChatOpenAI(
+    "gpt": lambda c: CustomChatOpenAI(
         model=c.model_name,
         temperature=c.temperature,
     ),
@@ -104,7 +141,7 @@ PROVIDER_MAPPING: Dict[str, Callable[[ModelConfig], Any]] = {
 
 
 @lru_cache(maxsize=None)
-@retry_on_rate_limit()
+@retry_on_api_exceptions()
 def get_llm_from_model_name(config: ModelConfig) -> Any:
     """
     Initialize and return an LLM instance based on the provided configuration.

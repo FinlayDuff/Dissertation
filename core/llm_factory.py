@@ -2,13 +2,21 @@ from dataclasses import dataclass
 from typing import Optional, Any, Tuple, Dict, TypedDict, List, Union
 from config.experiments import EXPERIMENT_CONFIGS, ModelConfig
 from config.prompts import TASK_PROMPTS, STRUCTURED_OUTPUTS, USER_INPUT_PROMPT
-from config.signals import CREDIBILITY_SIGNALS
+from config.signals import CREDIBILITY_SIGNALS, CREDIBILITY_SIGNALS_CONDENSED
 import json
 
 from core.state import State
 from utils.langchain.llm_model_selector import get_llm_from_model_name
+import re
 
 from enum import Enum
+from utils.constants import (
+    POLARITY,
+    LABEL,
+    CONFIDENCE,
+    RELEVANCE,
+    TRUST,
+)
 
 
 class TaskType(Enum):
@@ -69,12 +77,14 @@ class LLMResponse:
     Attributes:
         raw_content: Original response string from the LLM
         parsed_content: Structured data parsed from the response
+        input_content: Original input content sent to the LLM
     """
 
     raw_content: str
     parsed_content: Optional[
         Union[ClassificationResult, SignalResult, BulkSignalsResult]
     ] = None
+    input_content: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -180,7 +190,6 @@ class LLMFactory:
             title=state["article_title"],
             content=state["article_content"],
         )
-        
 
         examples = state.get("few_shot_examples", [])
         user_content += USER_INPUT_PROMPT["few_shot_extension"].format(
@@ -207,8 +216,13 @@ class LLMFactory:
         )
 
         signal_type = state.get("current_signal")
+        # Use condensed signals for bulk detection
+        if state.get("condensed_signals"):
+            signal_questions = CREDIBILITY_SIGNALS_CONDENSED
+        else:
+            signal_questions = CREDIBILITY_SIGNALS
         user_content += USER_INPUT_PROMPT["individual_signal_extension"].format(
-            signal_type=signal_type, signal_config=CREDIBILITY_SIGNALS[signal_type]
+            signal_type=signal_type, signal_config=signal_questions[signal_type]
         )
 
         config = LLMConfig.from_model_config(
@@ -232,8 +246,15 @@ class LLMFactory:
             title=state["article_title"],
             content=state["article_content"],
         )
+
+        # Use condensed signals for bulk detection
+        if state.get("condensed_signals"):
+            signal_questions = CREDIBILITY_SIGNALS_CONDENSED
+        else:
+            signal_questions = CREDIBILITY_SIGNALS
+
         user_content += USER_INPUT_PROMPT["bulk_signals_extension"].format(
-            signals_list=json.dumps(CREDIBILITY_SIGNALS, indent=2)
+            signals_list=json.dumps(signal_questions, indent=2)
         )
 
         config = LLMConfig.from_model_config(
@@ -243,43 +264,117 @@ class LLMFactory:
             structured_output=STRUCTURED_OUTPUTS["bulk_signals"],
             user_content=user_content,
         )
-        return LLMFactory._initialize_llm(config)
+        return LLMFactory._initialize_llm(config, state=state)
+
+    @staticmethod
+    def signal_weight(row, overall_trust=1):
+        return (
+            POLARITY[row["polarity"]]
+            * LABEL[row["label"]]
+            * CONFIDENCE[row["confidence"]]
+            * RELEVANCE[row["relevance"]]
+            * TRUST[overall_trust]
+        )
+
+    @staticmethod
+    def format_signals_data_for_classification(
+        sig_dict: dict, condensed_signals: bool
+    ) -> list:
+        signal_questions = (
+            CREDIBILITY_SIGNALS_CONDENSED if condensed_signals else CREDIBILITY_SIGNALS
+        )
+
+        signals_data_for_classification = {
+            signal_name: {
+                "label": signal_data["label"],
+                "polarity": signal_questions.get(signal_name, {}).get("polarity"),
+                "confidence": signal_data["confidence"],
+                "explanation": signal_data["explanation"],
+            }
+            for signal_name, signal_data in sig_dict.items()
+        }
+
+        return signals_data_for_classification
+
+    @staticmethod
+    def format_signals_data_for_critic(sig_dict: dict, condensed_signals: bool) -> list:
+        signal_questions = (
+            CREDIBILITY_SIGNALS_CONDENSED if condensed_signals else CREDIBILITY_SIGNALS
+        )
+
+        signals_data_for_classification = {
+            signal_name: {
+                "signal_type": signal_questions.get(signal_name, {}).get("signal_type"),
+                "question": signal_questions.get(signal_name, {}).get("question"),
+                "polarity": signal_questions.get(signal_name, {}).get("polarity"),
+                **signal_data,
+            }
+            for signal_name, signal_data in sig_dict.items()
+        }
+        return signals_data_for_classification
+
+    @staticmethod
+    def format_signal_critic_data_for_classification(
+        sig_dict: dict,
+    ) -> list:
+
+        signals_data_for_classification = {
+            signal_name: {
+                "label": signal_data["label"],
+                "polarity": signal_data["polarity"],
+                "quality": signal_data["quality"],
+                "relevance": signal_data["relevance"],
+                "explanation": signal_data["explanation"],
+                "weight": LLMFactory.signal_weight(
+                    row=signal_data,
+                    overall_trust=sig_dict["overall_extraction_trust"],
+                ),
+            }
+            for signal_name, signal_data in sig_dict["reliable_signals"].items()
+        }
+        return signals_data_for_classification
 
     @staticmethod
     def _create_classification_with_signals(state: State) -> Tuple[Any, str]:
         model_config = LLMFactory._get_model_config(state, "classification")
+        task_prompt = TASK_PROMPTS["zero_shot_classification_signals"]
 
+        # Parse the state to get the signals
         signals = state.get("credibility_signals", {})
-        signals_data_for_classification = {
-            signal_name: {
-                "prompt": CREDIBILITY_SIGNALS.get(signal_name, {}).get("prompt"),
-                **signal_data,
-            }
-            for signal_name, signal_data in signals.items()
-        }
+        condensed_signals = state.get("condensed_signals")
+        signals_data_for_classification = (
+            LLMFactory.format_signals_data_for_classification(
+                signals, condensed_signals
+            )
+        )
+        signals_critiques = state.get("signals_critiques", {})
+        followup_analysis = state.get("followup_signals_analysis", {})
 
+        # Always inject this
         user_content = USER_INPUT_PROMPT["base_inputs"].format(
             title=state["article_title"],
             content=state["article_content"],
         )
-        if signals_data_for_classification:
+
+        if signals_data_for_classification and not signals_critiques:
             user_content += USER_INPUT_PROMPT["classified_signals_extension"].format(
                 signals_list=json.dumps(signals_data_for_classification, indent=2)
             )
 
-        critic_list = state.get("signals_critiques", {})
-        if critic_list:
-            user_content += USER_INPUT_PROMPT["critic_extension"].format(
-                critic_list=json.dumps(critic_list, indent=2)
+        if signals_critiques:
+            critc_list = LLMFactory.format_signal_critic_data_for_classification(
+                signals_critiques
             )
+            user_content += USER_INPUT_PROMPT["critic_extension"].format(
+                critic_list=json.dumps(critc_list, indent=2),
+                overall_extraction_trust=signals_critiques["overall_extraction_trust"],
+            )
+            task_prompt = TASK_PROMPTS["zero_shot_classification_signals_critic"]
 
-        followup_analysis = state.get("followup_signals_analysis", {})
         if followup_analysis:
             user_content += USER_INPUT_PROMPT[
                 "followup_analysis_classification_extension"
             ].format(followup_analysis=json.dumps(followup_analysis, indent=2))
-
-        task_prompt = TASK_PROMPTS["zero_shot_classification_signals"]
 
         examples = state.get("few_shot_examples", [])
         if examples:
@@ -319,17 +414,18 @@ class LLMFactory:
         # This is consistent no matter what's being critiqued
         model_config = LLMFactory._get_model_config(state, "critic")
         signals = state.get("credibility_signals", {})
-        signals_data_for_classification = {
-            signal_name: {
-                **signal_data,
-                "prompt": CREDIBILITY_SIGNALS.get(signal_name, {}).get("prompt"),
-            }
-            for signal_name, signal_data in signals.items()
-        }
+        condensed_signals = state.get("condensed_signals")
+        signals_data_for_critic = LLMFactory.format_signals_data_for_critic(
+            signals, condensed_signals
+        )
+        topic = state.get("topic", "unknown")
 
         user_content = USER_INPUT_PROMPT[
             "signal_classification_critic_extension"
-        ].format(signals_list=json.dumps(signals_data_for_classification, indent=2))
+        ].format(
+            topic=topic,
+            signals_list=json.dumps(signals_data_for_critic, indent=2),
+        )
 
         config = LLMConfig.from_model_config(
             model_config,
@@ -383,16 +479,22 @@ class LLMFactory:
 
     @staticmethod
     def _parse_classification(content: str):
+        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
+        fence = re.match(
+            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
+        )
+        if fence:
+            content = fence.group(1)  # keep only the inner JSON
         try:
             data = json.loads(content)
 
             # Check if it has "label", "confidence", "explanation" keys
             if all(key in data for key in ["label", "confidence", "explanation"]):
-                # If label is an int
-                if isinstance(data["label"], int):
+                # If label valid classification
+                if data["label"] in ["REAL", "FAKE"]:
                     return {
-                        "label": data["label"],
-                        "confidence": float(data["confidence"]),
+                        "label": 1 if data["label"] == "REAL" else 0,
+                        "confidence": data["confidence"],
                         "explanation": data["explanation"],
                     }
 
@@ -402,6 +504,12 @@ class LLMFactory:
 
     @staticmethod
     def _parse_critic(content: str):
+        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
+        fence = re.match(
+            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
+        )
+        if fence:
+            content = fence.group(1)  # keep only the inner JSON
         try:
             data = json.loads(content)
 
@@ -420,17 +528,34 @@ class LLMFactory:
 
     @staticmethod
     def _parse_signals_critic(content: str):
+        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
+        fence = re.match(
+            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
+        )
+        if fence:
+            content = fence.group(1)  # keep only the inner JSON
         try:
-            data = json.loads(content)
-            signals = data.get("signals", {})
+            critic_output = json.loads(content)
 
+            if not critic_output:
+                print("Failed to parse content due to missing critic output", content)
+                return None
             # Check each signal has required fields
-            for signal_name, signal_data in signals.items():
-                if not all(key in signal_data for key in ["label", "explanation"]):
-                    print("Failed to parse content due to missing keys", content)
-                    return None
+            if not all(
+                key in critic_output.keys()
+                for key in [
+                    "reliable_signals",
+                    "overall_extraction_trust",
+                    "followup_signals",
+                    "critic_notes",
+                ]
+            ):
+                print(
+                    "Failed to parse content due to missing keys", critic_output.items()
+                )
+                return None
 
-            return {"signals_critiques": signals}
+            return {"signals_critiques": critic_output}
 
         except json.JSONDecodeError:
             print("Failed to parse content due JSON error", content)
@@ -438,15 +563,25 @@ class LLMFactory:
 
     @staticmethod
     def _parse_signal(content: str) -> SignalResult:
+        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
+        fence = re.match(
+            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
+        )
+        if fence:
+            content = fence.group(1)  # keep only the inner JSON
         try:
             data = json.loads(content)
             # Check if it has "label", "confidence", "explanation" keys
-            if all(key in data for key in ["label", "confidence", "explanation"]):
+            if all(
+                key in data
+                for key in ["label", "confidence", "explanation", "article_excerpts"]
+            ):
                 # If label is an int
                 if isinstance(data["label"], int):
                     return {
                         "label": data["label"],
-                        "confidence": float(data["confidence"]),
+                        "article_excerpts": data["article_excerpts"],
+                        "confidence": data["confidence"],
                         "explanation": data["explanation"],
                     }
 
@@ -455,13 +590,22 @@ class LLMFactory:
             return None
 
     @staticmethod
-    def _parse_bulk_signals(content: str) -> BulkSignalsResult:
+    def _parse_bulk_signals(content: str, condensed: bool) -> BulkSignalsResult:
+        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
+        fence = re.match(
+            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
+        )
+        if fence:
+            content = fence.group(1)  # keep only the inner JSON
         try:
             data = json.loads(content)
             signals = data.get("signals", {})
-
+            if condensed:
+                signal_questions = CREDIBILITY_SIGNALS_CONDENSED
+            else:
+                signal_questions = CREDIBILITY_SIGNALS
             # Check that all required credibility signals are present
-            if not all(signal in signals for signal in CREDIBILITY_SIGNALS):
+            if not all(signal in signals for signal in signal_questions):
                 print("Failed to parse content due to missing signals", content)
                 return None
 
@@ -473,9 +617,6 @@ class LLMFactory:
                     print("Failed to parse content due to missing keys", content)
                     return None
 
-                # Convert confidence to float if needed
-                signals[signal_name]["confidence"] = float(signal_data["confidence"])
-
             return {"signals": signals}
 
         except json.JSONDecodeError:
@@ -483,7 +624,9 @@ class LLMFactory:
             return None
 
     @staticmethod
-    def _initialize_llm(config: LLMConfig) -> Tuple[Any, str]:
+    def _initialize_llm(
+        config: LLMConfig, state: Optional[State] = None
+    ) -> Tuple[Any, str]:
         """Initialize LLM with configuration and parsing."""
 
         llm = get_llm_from_model_name(config)
@@ -516,7 +659,9 @@ class LLMFactory:
                 if config.task_type == TaskType.CLASSIFY_ARTICLE:
                     parsed = LLMFactory._parse_classification(content)
                 elif config.task_type == TaskType.BULK_SIGNALS:
-                    parsed = LLMFactory._parse_bulk_signals(content)
+                    parsed = LLMFactory._parse_bulk_signals(
+                        content, state.get("condensed_signals")
+                    )
                 elif config.task_type == TaskType.INDIVIDUAL_SIGNAL:
                     parsed = LLMFactory._parse_signal(content)
                 elif config.task_type == TaskType.CRITIC:
@@ -528,6 +673,8 @@ class LLMFactory:
                 else:
                     raise ValueError(f"Unknown task type: {config.task_type}")
 
-                return LLMResponse(raw_content=content, parsed_content=parsed)
+                return LLMResponse(
+                    raw_content=content, parsed_content=parsed, input_content=message
+                )
 
         return WrappedLLM(**llm.__dict__)

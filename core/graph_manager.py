@@ -56,7 +56,7 @@ class GraphManager:
             state_schema=State,  # Use our State type as schema
         )
         self.graph = None
-        self.stored_credibility_signals = []
+        self.stored_states = []
         self.build_graph()
 
     def _get_graph_configuration(self):
@@ -69,8 +69,10 @@ class GraphManager:
             required_nodes.append("detect_signals")
             direct_edges.append((START, "detect_signals"))
             if signals_config.get("critic", False):
+                required_nodes.append("classify_topic")
+                direct_edges.append(("detect_signals", "classify_topic"))
                 required_nodes.append("critic_credibility_signals")
-                direct_edges.append(("detect_signals", "critic_credibility_signals"))
+                direct_edges.append(("classify_topic", "critic_credibility_signals"))
                 if signals_config.get("followup", False):
                     required_nodes.append("run_followup_analysis")
                     direct_edges.append(
@@ -108,6 +110,7 @@ class GraphManager:
             "detect_signals": self.detection_system.detect_signals,
             "critic_credibility_signals": self.detection_system.critic_signal_classification,
             "run_followup_analysis": self.detection_system.run_followup_analysis,
+            "classify_topic": self.detection_system.classify_topic,
         }
 
         required_nodes, direct_edges, conditional_edges = (
@@ -168,8 +171,7 @@ class GraphManager:
             str: The next node in the graph (e.g. "classify_article" after processing).
         """
         signals_critiques = state.get("signals_critiques")
-
-        if any(critique.get("label") for critique in signals_critiques.values()):
+        if signals_critiques.get("followup_signals", False):
             return "run_followup_analysis"
 
         return "classify_article"
@@ -193,8 +195,6 @@ class GraphManager:
                 - label: Classification result
                 - confidence: Confidence score
                 - explanation: Reasoning
-                - credibility_signals: Detected signals
-                - critic_decision: Result of critic analysis
 
         Example:
             >>> example = {
@@ -212,6 +212,7 @@ class GraphManager:
             "experiment_name": example.get("experiment_name"),
             "use_signals": example.get("use_signals"),
             "use_bulk_signals": example.get("use_bulk_signals"),
+            "condensed_signals": example.get("condensed_signals"),
             "few_shot": example.get("few_shot"),
             "few_shot_examples": example.get("few_shot_examples"),
         }
@@ -219,17 +220,13 @@ class GraphManager:
         final_state = self.graph.invoke(initial_state)
 
         if self.verbose:
-            print(f"Classifcation: {final_state.get('label')}")
+            print(f"Classification: {final_state.get('label')}")
 
-        self.stored_credibility_signals.append(
-            final_state.get("credibility_signals", {})
-        )
-
-        return {
-            "label": final_state.get("label"),
-            "confidence": final_state.get("confidence"),
-            "explanation": final_state.get("explanation"),
+        save_final_state = {
+            k: v for k, v in final_state.items() if k not in initial_state.keys()
         }
+
+        return save_final_state
 
     def visualize_graph(self) -> None:
         """
@@ -242,12 +239,3 @@ class GraphManager:
             display(Image(self.graph.get_graph().draw_mermaid_png()))
         except Exception:
             print("Graph visualization only available in notebook environment")
-
-    def get_stored_signals(self) -> list:
-        """
-        Retrieve stored credibility signals from previous runs.
-
-        Returns:
-            list: List of credibility signal dictionaries from past analyses
-        """
-        return self.stored_credibility_signals

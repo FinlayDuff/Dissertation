@@ -18,6 +18,9 @@ class State(TypedDict):
     use_bulk_signals: Annotated[
         bool, "Whether to detect signals in bulk or individually"
     ]
+    condensed_signals: Annotated[
+        "bool", "Whether to use the condensed set of signals or the full list"
+    ]
     few_shot: Annotated[bool, "Whether to use few-shot examples"]
     few_shot_examples: Annotated[
         List[Dict[str, Any]], "List of examples for few-shot learning"
@@ -45,3 +48,5 @@ class State(TypedDict):
     followup_signals_analysis: Annotated[
         Optional[Dict[str, Any]], "Results from any followup analysis on signals"
     ]
+    topic: Annotated[Optional[str], "Topic of the article"]
+    classification_prompt: Annotated[Optional[str], "Prompt used for classification"]

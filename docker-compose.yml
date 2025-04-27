@@ -1,0 +1,21 @@
+services:
+  misinformation_detector:
+    build: .
+    volumes:
+      - ./results:/app/results
+      - .env:/app/.env
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
+      - HUGGINGFACEHUB_API_TOKEN=${HUGGINGFACEHUB_API_TOKEN}
+    command: poetry run python main.py --experiment ${EXPERIMENT:-zero_shot_gpt4} --dataset ${DATASET:-FA-KES}
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    tmpfs:
+      - /tmp:size=2G

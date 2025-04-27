@@ -1,11 +1,25 @@
 from tqdm import tqdm
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Dict, Optional
+from dataclasses import dataclass
 from datetime import datetime
 import uuid
 
 
+@dataclass
+class EvaluationResult:
+    """Standardized evaluation result structure"""
+
+    key: str
+    score: float
+    value: Any
+    comment: Optional[str] = None
+    correction: Optional[Any] = None
+
+
 class MockRun:
-    def __init__(self, inputs, outputs, name="local-eval"):
+    """Mimics LangSmith Run structure"""
+
+    def __init__(self, inputs: Dict, outputs: Dict, name: str = "local-eval"):
         self.id = str(uuid.uuid4())
         self.name = name
         self.start_time = datetime.now()
@@ -19,36 +33,31 @@ def evaluate_locally(
     eval_fn: Callable[[dict], dict],
     evaluator: Callable[[dict, Any], dict],
 ) -> Any:
-    """
-    Locally evaluate a dataset using the experiment's graph.
-
-    Args:
-        dataset: List of Example objects with .inputs and .outputs
-        eval_fn: Function that runs the graph (takes .inputs, returns prediction)
-        evaluator: Function that scores the prediction (takes run + example)
-
-    Returns:
-        An object mimicking the LangSmith EvaluationResult with ._results
-    """
+    """Local evaluation with standardized result structure"""
     results = []
     for example in tqdm(dataset, desc="Local Evaluation"):
-        # Run the model/graph
+        # Run prediction
         outputs = eval_fn(example.inputs)
-
         run = MockRun(example.inputs, outputs)
 
-        # Call the evaluator with mock run + real example
-        evaluation_result = evaluator(run, example)
-        evaluation_result["key"] = evaluator.__name__
-        evaluation_result["correction"] = None
-        evaluation_result["value"] = run.outputs.get("label", "")
+        # Get evaluation score and comment
+        eval_dict = evaluator(run, example)
 
-        # Package result
+        # Create standardized result
+        evaluation_result = EvaluationResult(
+            key=evaluator.__name__,
+            score=eval_dict["score"],
+            value=run.outputs.get("label", ""),
+            comment=eval_dict.get("comment"),
+            correction=None,
+        )
+
+        # Package in LangSmith-like structure
         results.append(
             {
                 "example": example,
                 "run": run,
-                "evaluation_results": {"results": evaluation_result},
+                "evaluation_results": {"results": [evaluation_result]},
             }
         )
 

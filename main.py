@@ -1,4 +1,4 @@
-from core.experiment import Experiment
+from utils.logging import setup_logging
 from langchain.globals import set_debug
 import argparse
 import multiprocessing
@@ -17,6 +17,13 @@ def main():
 
     set_debug(False)
 
+    logger = setup_logging(
+        verbose=args.verbose, app_name=f"{args.dataset}_{args.experiment}"
+    )
+
+    # Import experiment due to logging setup
+    from core.experiment import Experiment
+
     experiment = Experiment(
         experiment_name=args.experiment,
         dataset_name=args.dataset,
@@ -25,13 +32,12 @@ def main():
         evaluate_locally=args.evaluate_locally,
         verbose=args.verbose,
     )
+
     experiment.run()
-    if args.verbose:
-        print(f"Experiment {args.experiment} completed.")
-        print("Results saved to results directory.")
+    logger.info(f"Experiment {args.dataset}_{args.experiment} completed successfully.")
+    logger.info("Results saved to results directory.")
 
 
 if __name__ == "__main__":
-    # Optional: safer multiprocessing backend on macOS
-    multiprocessing.set_start_method("spawn", force=True)
+    multiprocessing.set_start_method("fork", force=True)
     main()

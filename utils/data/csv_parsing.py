@@ -3,11 +3,12 @@ import chardet
 import pandas as pd
 
 
-def detect_encoding(csv_file_path):
-    with open(csv_file_path, "rb") as f:
-        result = chardet.detect(f.read())
-        encoding = result["encoding"]
-    return encoding
+def detect_encoding(path, sample_size=100_000):
+    with open(path, "rb") as f:
+        raw = f.read(sample_size)
+    result = chardet.detect(raw)
+    enc = result["encoding"] or "utf-8"
+    return enc, result.get("confidence", 0)
 
 
 def load_csv_as_dicts(csv_file_path):

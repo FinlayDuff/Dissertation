@@ -1,6 +1,9 @@
 from langsmith import Client
 from pandas import DataFrame
 from typing import List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LangsmithDatasetManager:
@@ -112,6 +115,6 @@ _instance: Optional[LangsmithDatasetManager] = None
 def get_manager() -> LangsmithDatasetManager:
     global _instance
     if _instance is None:
-        print("[INFO] Initialising the Langsmith Dataset Manager")
+        logger.info("Initialising the Langsmith Dataset Manager")
         _instance = LangsmithDatasetManager()
     return _instance

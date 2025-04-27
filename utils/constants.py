@@ -7,3 +7,10 @@ veracity_dict = {
     "false": 0,
     "pants-fire": 0,
 }
+
+
+POLARITY = {"POSITIVE": 1.0, "NEGATIVE": -1.0, "WEAK_NEGATIVE": -0.5}
+CONFIDENCE = {"HIGH": 0.9, "MEDIUM": 0.6, "LOW": 0.3}
+RELEVANCE = {"HIGH": 1.0, "MEDIUM": 0.5, "LOW": 0.25}
+TRUST = {"HIGH": 1.0, "MEDIUM": 0.75, "LOW": 0.5}
+LABEL = {"TRUE": 1.0, "FALSE": -1.0}

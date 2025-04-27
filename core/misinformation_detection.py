@@ -17,7 +17,7 @@ import json
 from core.llm_factory import LLMFactory
 from core.state import State
 from config.signals import CREDIBILITY_SIGNALS
-from utils.langchain.llm_model_selector import retry_on_rate_limit
+from utils.langchain.llm_model_selector import retry_on_api_exceptions
 from core.followup_analysis_tools import FOLLOWUP_TOOLS
 
 
@@ -37,7 +37,6 @@ class MisinformationDetection:
         """Initialize the misinformation detection system."""
         self.verbose = verbose
 
-    @retry_on_rate_limit()
     def classify_article(self, state: State) -> State:
         """
         Classify an article as credible or fake using an LLM.
@@ -66,9 +65,11 @@ class MisinformationDetection:
         state["messages"] = [response.raw_content]
         if response.parsed_content:
             state.update(response.parsed_content)
+        if response.input_content:
+            state["classification_prompt"] = response.input_content
         return state
 
-    @retry_on_rate_limit()
+    @retry_on_api_exceptions()
     def detect_signals(self, state: State) -> State:
         """
         Detect credibility signals either in bulk or individually.
@@ -138,7 +139,7 @@ class MisinformationDetection:
 
         return state
 
-    @retry_on_rate_limit()
+    @retry_on_api_exceptions()
     def make_critic_decision(self, state: State) -> State:
         """
         Decide if additional analysis is needed based on current results.
@@ -179,7 +180,7 @@ class MisinformationDetection:
 
     def critic_signal_classification(self, state: State) -> State:
         """
-        Detect all credibility signals in one LLM call.
+        Quality-control gate between the signal-extractor and the final REAL/FAKE classifier.
 
         Args:
             state: Current state with article information
@@ -206,14 +207,13 @@ class MisinformationDetection:
         Returns:
             str: State with updated follow-up analysis results
         """
-        signals_critiques = state.get("signals_critiques", {})
+        followup_signals = state.get("signals_critiques", {}).get("followup_signals", [])
 
         followup_results = {}
-        for signal_name in signals_critiques:
-            # Only process signals that are flagged for review
+        for signal_name in followup_signals:
+            # Only process signals if they have a valid follow-up tool configured.
             if (
-                signals_critiques[signal_name]["label"] == "TRUE"
-                and signal_name in FOLLOWUP_TOOLS
+                signal_name in FOLLOWUP_TOOLS
             ):
                 if self.verbose:
                     print(
@@ -236,9 +236,25 @@ class MisinformationDetection:
                     if response.parsed_content:
                         response.parsed_content["analysis_type"] = "llm"
                         followup_results[signal_name] = response.parsed_content
-                else:
-                    if self.verbose:
-                        print(f"No follow-up tool configured for signal: {signal_name}")
+            else:
+                if self.verbose:
+                    print(f"No follow-up tool configured for signal: {signal_name}")
         if followup_results:
             state["followup_signals_analysis"] = followup_results
+        return state
+
+    def classify_topic(self, state: State) -> State:
+        """
+        Sets state['topic'] to a short lowercase label
+        labels_list=['education', 'human interest', 'society', 'sport', 'crime, law and justice',
+        'disaster, accident and emergency incident', 'arts, culture, entertainment and media', 'politics',
+        'economy, business and finance', 'lifestyle and leisure', 'science and technology',
+        'health', 'labour', 'religion', 'weather', 'environment', 'conflict, war and peace'],
+        """
+        article_topic_classifier = FOLLOWUP_TOOLS["topic"]
+        topic_classifier_output = article_topic_classifier["method"](state)
+        topic = topic_classifier_output.get("result", {}).get("label", None)
+        if topic is None:
+            raise ValueError("Topic classification failed.")
+        state["topic"] = topic
         return state
