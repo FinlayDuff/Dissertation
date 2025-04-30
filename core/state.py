@@ -50,3 +50,6 @@ class State(TypedDict):
     ]
     topic: Annotated[Optional[str], "Topic of the article"]
     classification_prompt: Annotated[Optional[str], "Prompt used for classification"]
+    feature_selection: Annotated[
+        Optional[Dict[str, Any]], "Features selected for the model"
+    ]

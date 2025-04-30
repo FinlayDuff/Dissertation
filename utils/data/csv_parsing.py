@@ -8,7 +8,7 @@ def detect_encoding(path, sample_size=100_000):
         raw = f.read(sample_size)
     result = chardet.detect(raw)
     enc = result["encoding"] or "utf-8"
-    return enc, result.get("confidence", 0)
+    return enc
 
 
 def load_csv_as_dicts(csv_file_path):
@@ -24,7 +24,7 @@ def load_csv_as_dicts(csv_file_path):
 
 def load_csv_as_dataframe(csv_file_path):
     # Detect the file's encoding
-    encoding = detect_encoding(csv_file_path=csv_file_path)
+    encoding = detect_encoding(path=csv_file_path)
 
     # Read the CSV using the detected encoding
     df = pd.read_csv(csv_file_path, encoding=encoding)

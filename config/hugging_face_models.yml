@@ -30,11 +30,6 @@ models:
     max_length: 512
     name: martin-ha/toxic-comment-model
     type: text-classification
-  # incorrect_spelling:
-    #   name: "oliverguhr/spelling-correction-english-base"
-    #   type: "text-classification"
-    #   description: "Spelling error detection model using SpellBERT"
-    #   max_length: 1024
   informal_tone:
     description: Formality detection model using RoBERTa
     max_length: 512
@@ -63,3 +58,8 @@ models:
     name: classla/multilingual-IPTC-news-topic-classifier
     type: text-classification
     max_length: 512
+  summarizer:
+    description: BART-CNN summarization model
+    name: facebook/bart-large-cnn
+    type: summarization
+    max_length:  1024

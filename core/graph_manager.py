@@ -15,6 +15,8 @@ from IPython.display import Image, display
 from core.misinformation_detection import MisinformationDetection
 from core.state import State
 from typing import Dict
+from utils.utils import to_ascii
+from core.followup_analysis_tools import FOLLOWUP_TOOLS, Classifier, TitleClassifier
 
 
 class GraphManager:
@@ -60,6 +62,8 @@ class GraphManager:
         self.build_graph()
 
     def _get_graph_configuration(self):
+        # This ugly mess is to ensure that the graph compiles as configured.
+        # Without this, we'd represent all possible versions of the graph.
         required_nodes = ["classify_article"]
         direct_edges = [("classify_article", END)]
         conditional_edges = []
@@ -74,23 +78,72 @@ class GraphManager:
                 required_nodes.append("critic_credibility_signals")
                 direct_edges.append(("classify_topic", "critic_credibility_signals"))
                 if signals_config.get("followup", False):
-                    required_nodes.append("run_followup_analysis")
-                    direct_edges.append(
-                        (
-                            "run_followup_analysis",
-                            "classify_article",
+                    required_nodes.append("followup_llm")
+                    required_nodes.append("followup_classifier")
+                    if signals_config.get("feature_selector", False):
+                        required_nodes.append("feature_selector")
+                        direct_edges.append(
+                            (
+                                "followup_classifier",
+                                "feature_selector",
+                            )
                         )
-                    )
-                    conditional_edges.append(
-                        (
-                            "critic_credibility_signals",
-                            self.decide_signals_critic_path,
-                            {
-                                "classify_article": "classify_article",
-                                "run_followup_analysis": "run_followup_analysis",
-                            },
+                        direct_edges.append(
+                            (
+                                "feature_selector",
+                                "classify_article",
+                            )
                         )
-                    )
+                        conditional_edges.append(
+                            (
+                                "critic_credibility_signals",
+                                self.decide_signals_critic_path,
+                                {
+                                    "classify_article": "classify_article",
+                                    "feature_selector": "feature_selector",
+                                    "followup_llm": "followup_llm",
+                                    "followup_classifier": "followup_classifier",
+                                },
+                            )
+                        )
+                        conditional_edges.append(
+                            (
+                                "followup_llm",
+                                self.decide_followup_llm_path,
+                                {
+                                    "feature_selector": "feature_selector",
+                                    "followup_classifier": "followup_classifier",
+                                },
+                            )
+                        )
+                    else:
+                        direct_edges.append(
+                            (
+                                "followup_classifier",
+                                "classify_article",
+                            )
+                        )
+                        conditional_edges.append(
+                            (
+                                "critic_credibility_signals",
+                                self.decide_signals_critic_path,
+                                {
+                                    "classify_article": "classify_article",
+                                    "followup_llm": "followup_llm",
+                                    "followup_classifier": "followup_classifier",
+                                },
+                            )
+                        )
+                        conditional_edges.append(
+                            (
+                                "followup_llm",
+                                self.decide_followup_llm_path,
+                                {
+                                    "classify_article": "classify_article",
+                                    "followup_classifier": "followup_classifier",
+                                },
+                            )
+                        )
                 else:
                     direct_edges.append(
                         ("critic_credibility_signals", "classify_article")
@@ -109,8 +162,10 @@ class GraphManager:
             "classify_article": self.detection_system.classify_article,
             "detect_signals": self.detection_system.detect_signals,
             "critic_credibility_signals": self.detection_system.critic_signal_classification,
-            "run_followup_analysis": self.detection_system.run_followup_analysis,
+            "followup_llm": self.detection_system.followup_llm,
+            "followup_classifier": self.detection_system.followup_classifier,
             "classify_topic": self.detection_system.classify_topic,
+            "feature_selector": self.detection_system.feature_selector,
         }
 
         required_nodes, direct_edges, conditional_edges = (
@@ -170,11 +225,63 @@ class GraphManager:
         Returns:
             str: The next node in the graph (e.g. "classify_article" after processing).
         """
-        signals_critiques = state.get("signals_critiques")
-        if signals_critiques.get("followup_signals", False):
-            return "run_followup_analysis"
+        follow_up = state.get("signals_critiques", {}).get("follow_up", [])
+        llm_based = any(
+            [
+                FOLLOWUP_TOOLS.get(signal_name, {}).get("method") == "llm"
+                for signal_name in follow_up
+            ]
+        )
+        classifier_based = any(
+            [
+                isinstance(
+                    FOLLOWUP_TOOLS.get(signal_name, {}).get("method"),
+                    (Classifier, TitleClassifier),
+                )
+                for signal_name in follow_up
+            ]
+        )
+        feature_selector = self._experiment_config.get("signals", {}).get(
+            "feature_selector", False
+        )
 
-        return "classify_article"
+        if llm_based:
+            return "followup_llm"
+        elif classifier_based:
+            return "followup_classifier"
+        elif feature_selector:
+            return "feature_selector"
+        else:
+            return "classify_article"
+
+    def decide_followup_llm_path(self, state: State) -> str:
+        """
+        Args:
+            state: Current state with article information
+
+        Returns:
+            str: The next node in the graph (e.g. "classify_article" after processing).
+        """
+        follow_up = state.get("signals_critiques", {}).get("follow_up", [])
+        classifier_based = any(
+            [
+                isinstance(
+                    FOLLOWUP_TOOLS.get(signal_name, {}).get("method"),
+                    (Classifier, TitleClassifier),
+                )
+                for signal_name in follow_up
+            ]
+        )
+        feature_selector = self._experiment_config.get("signals", {}).get(
+            "feature_selector", False
+        )
+
+        if classifier_based:
+            return "followup_classifier"
+        elif feature_selector:
+            return "feature_selector"
+        else:
+            return "classify_article"
 
     def run_graph_on_example(self, example: dict) -> dict:
         """
@@ -207,8 +314,8 @@ class GraphManager:
 
         initial_state = {
             "messages": [],
-            "article_title": example.get("article_title"),
-            "article_content": example.get("article_content"),
+            "article_title": to_ascii(example.get("article_title")),
+            "article_content": to_ascii(example.get("article_content")),
             "experiment_name": example.get("experiment_name"),
             "use_signals": example.get("use_signals"),
             "use_bulk_signals": example.get("use_bulk_signals"),
@@ -237,5 +344,6 @@ class GraphManager:
         """
         try:
             display(Image(self.graph.get_graph().draw_mermaid_png()))
-        except Exception:
-            print("Graph visualization only available in notebook environment")
+        except Exception as e:
+            print(f"Error visualizing graph: {str(e)}")
+            print("Graph visualization may only be available in notebook environments")

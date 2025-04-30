@@ -87,62 +87,86 @@ CREDIBILITY_SIGNALS: Dict[str, SignalConfig] = {
     },
 }
 
-CREDIBILITY_SIGNALS_CONDENSED: Dict[str, SignalConfig] = {
-    # ————— Factual-evidence signals —————
+CREDIBILITY_SIGNALS_CONDENSED = {
+    # ——— Factual-evidence signals ———
     "evidence_present": {
         "name": "evidence_present",
         "signal_type": "factual_evidence",
-        "question": "Does the text present concrete evidence (data, documents, on-record sources) to substantiate its main claims?",
+        "question": (
+            "Does the text quote or link at least one **named** source, data table, "
+            "document or eyewitness statement that supports its *main* claim?"
+        ),
         "polarity": "POSITIVE",
     },
-    "explicitly_unverified_claims": {
-        "name": "explicitly_unverified_claims",
+    "explicit_unverified_claims": {
+        "name": "explicit_unverified_claims",
         "signal_type": "factual_evidence",
-        "question": "Does the text contain claims that are explicitly unverified or lack confirmation by reliable sources?",
+        "question": (
+            "Does the text include a factual statement that the author explicitly says "
+            "is **unverified / unconfirmed** (e.g. 'police have not confirmed')?"
+        ),
         "polarity": "NEGATIVE",
     },
     "inference_error": {
         "name": "inference_error",
         "signal_type": "factual_evidence",
-        "question": "Does the text draw unwarranted conclusions about causation or correlation beyond the evidence provided?",
+        "question": (
+            "Does the text state a causal or quantitative conclusion **without any supporting "
+            "evidence** provided in the article?"
+        ),
         "polarity": "NEGATIVE",
     },
-    # ————— Source-quality signals —————
+    # ——— Source-quality signals ———
     "credible_sourcing": {
         "name": "credible_sourcing",
         "signal_type": "source_quality",
-        "question": "Does the text cite credible sources or experts relevant to the subject matter?",
+        "question": (
+            "Does the article rely **primarily** on sources with recognised expertise or authority "
+            "on the topic (named officials, peer-reviewed papers, major institutions)?"
+        ),
         "polarity": "POSITIVE",
     },
     "external_corroboration": {
         "name": "external_corroboration",
         "signal_type": "source_quality",
-        "question": "Is the story corroborated by other reputable media outlets or official records?",
+        "question": (
+            "Is the same core fact reported by **at least one other** independent, reputable outlet "
+            "or official record that is cited or linked in the text?"
+        ),
         "polarity": "POSITIVE",
     },
-    # ————— Style / tone risk signals —————
+    # ——— Style / tone risk signals ———
     "strong_framing_tone": {
         "name": "strong_framing_tone",
         "signal_type": "style_tone",
-        "question": "Does the text use strongly emotive or polarising language that could indicate framing bias?",
+        "question": (
+            "Does the text use emotion-laden or vilifying words aimed at persuading rather than informing?"
+        ),
         "polarity": "WEAK_NEGATIVE",
     },
     "clickbait": {
         "name": "clickbait",
         "signal_type": "style_tone",
-        "question": "Does the headline use sensationalised or misleading wording primarily to attract attention?",
+        "question": (
+            "Does the **headline** employ exaggeration, curiosity-gaps, all-caps or shock phrases to lure clicks?"
+        ),
         "polarity": "WEAK_NEGATIVE",
     },
     "writing_quality_alert": {
         "name": "writing_quality_alert",
         "signal_type": "style_tone",
-        "question": "Does the text display poor writing quality, such as significant misspellings, incivility, or excessive informal tone?",
+        "question": (
+            "Does the body contain **multiple** spelling errors, all-caps yelling, profanity or texting abbreviations?"
+        ),
         "polarity": "WEAK_NEGATIVE",
     },
     "misleading_about_content": {
         "name": "misleading_about_content",
         "signal_type": "style_tone",
-        "question": "Does this text's title emphasise different information than the body topic?",
+        "question": (
+            "After reading the body, does the headline focus on a **different topic or outcome** "
+            "than the article actually describes?"
+        ),
         "polarity": "WEAK_NEGATIVE",
     },
 }

@@ -26,6 +26,11 @@ class TaskType(Enum):
     CRITIC = "critic"
     SIGNAL_CRITIC = "signal_critic"
     FOLLOWUP_ANALYSIS = "followup_analysis"
+    FOLLOWUP_RAG = "followup_rag"
+    FOLLOWUP_CORROBORATION = "followup_corroboration"
+    FEATURE_SELECTOR = "feature_selector"
+    FOLLOWUP_CLAIM_EXTRACTOR = "followup_claim_extractor"
+    FOLLOWUP_CLAIM_VERIFICATION = "followup_claim_verification"
 
 
 class ClassificationResult(TypedDict):
@@ -132,6 +137,10 @@ class LLMConfig:
         )
 
 
+SCRATCH_RE = re.compile(r"<!--scratch-->.*?<!--scratch-->", re.DOTALL | re.IGNORECASE)
+FENCE_RE = re.compile(r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", re.IGNORECASE)
+
+
 class LLMFactory:
     @staticmethod
     def create_for_node(node_name: str, state: State) -> Tuple[Any, str]:
@@ -155,6 +164,12 @@ class LLMFactory:
 
         if node_name == "followup_analysis":
             return LLMFactory._create_followup_signal_analysis(state)
+        if node_name == "followup_rag":
+            return LLMFactory._create_follow_up_rag(state)
+
+        if node_name == "feature_selector":
+            return LLMFactory._create_feature_selector(state)
+
         raise ValueError(f"Unknown node type: {node_name}")
 
     @staticmethod
@@ -325,12 +340,26 @@ class LLMFactory:
                 "quality": signal_data["quality"],
                 "relevance": signal_data["relevance"],
                 "explanation": signal_data["explanation"],
-                "weight": LLMFactory.signal_weight(
-                    row=signal_data,
-                    overall_trust=sig_dict["overall_extraction_trust"],
-                ),
             }
-            for signal_name, signal_data in sig_dict["reliable_signals"].items()
+            for signal_name, signal_data in sig_dict["keep"].items()
+        }
+        return signals_data_for_classification
+
+    @staticmethod
+    def format_selected_features_for_classification(
+        sig_dict: dict, condensed_signals: bool
+    ) -> list:
+        signal_questions = (
+            CREDIBILITY_SIGNALS_CONDENSED if condensed_signals else CREDIBILITY_SIGNALS
+        )
+        signals_data_for_classification = {
+            signal_name: {
+                "question": signal_questions.get(signal_name, {}).get("question"),
+                "label": signal_data["label"],
+                "confidence": signal_data["confidence"],
+                "explanation": signal_data["explanation"],
+            }
+            for signal_name, signal_data in sig_dict.items()
         }
         return signals_data_for_classification
 
@@ -349,6 +378,7 @@ class LLMFactory:
         )
         signals_critiques = state.get("signals_critiques", {})
         followup_analysis = state.get("followup_signals_analysis", {})
+        selected_features = state.get("feature_selection", {})
 
         # Always inject this
         user_content = USER_INPUT_PROMPT["base_inputs"].format(
@@ -356,31 +386,50 @@ class LLMFactory:
             content=state["article_content"],
         )
 
-        if signals_data_for_classification and not signals_critiques:
-            user_content += USER_INPUT_PROMPT["classified_signals_extension"].format(
-                signals_list=json.dumps(signals_data_for_classification, indent=2)
-            )
+        if not selected_features:
+            if signals_data_for_classification and not signals_critiques:
+                user_content += USER_INPUT_PROMPT[
+                    "classified_signals_extension"
+                ].format(
+                    signals_list=json.dumps(signals_data_for_classification, indent=2)
+                )
 
-        if signals_critiques:
-            critc_list = LLMFactory.format_signal_critic_data_for_classification(
-                signals_critiques
-            )
-            user_content += USER_INPUT_PROMPT["critic_extension"].format(
-                critic_list=json.dumps(critc_list, indent=2),
-                overall_extraction_trust=signals_critiques["overall_extraction_trust"],
-            )
-            task_prompt = TASK_PROMPTS["zero_shot_classification_signals_critic"]
+            if signals_critiques:
+                critc_list = LLMFactory.format_signal_critic_data_for_classification(
+                    signals_critiques
+                )
+                user_content += USER_INPUT_PROMPT["critic_extension"].format(
+                    critic_list=json.dumps(critc_list, indent=2),
+                    overall_extraction_trust=signals_critiques["overall_trust"],
+                )
+                task_prompt = TASK_PROMPTS["zero_shot_classification_signals_critic"]
 
-        if followup_analysis:
-            user_content += USER_INPUT_PROMPT[
-                "followup_analysis_classification_extension"
-            ].format(followup_analysis=json.dumps(followup_analysis, indent=2))
+            if followup_analysis:
+                user_content += USER_INPUT_PROMPT[
+                    "followup_analysis_classification_extension"
+                ].format(followup_analysis=json.dumps(followup_analysis, indent=2))
+                task_prompt = TASK_PROMPTS[
+                    "zero_shot_classification_signals_critic_followup"
+                ]
 
         examples = state.get("few_shot_examples", [])
         if examples:
             task_prompt = TASK_PROMPTS["few_shot_classification_signals"]
             user_content += USER_INPUT_PROMPT["few_shot_extension"].format(
                 few_shot_block=examples
+            )
+
+        elif selected_features:
+            signals_data_for_classification = (
+                LLMFactory.format_selected_features_for_classification(
+                    selected_features["signals"], condensed_signals
+                )
+            )
+            task_prompt = TASK_PROMPTS["zero_shot_classification_feature_selector"]
+            user_content += USER_INPUT_PROMPT[
+                "classification_selected_features_extension"
+            ].format(
+                selected_features=json.dumps(signals_data_for_classification, indent=2),
             )
 
         config = LLMConfig.from_model_config(
@@ -438,7 +487,7 @@ class LLMFactory:
         return LLMFactory._initialize_llm(config)
 
     @staticmethod
-    def _create_followup_signal_analysis(state: State) -> Any:
+    def _create_followup_signal_analysis(state: State):
         """
         Creates LLM configuration for detailed follow-up analysis of a specific credibility signal.
 
@@ -458,7 +507,7 @@ class LLMFactory:
             signal_type, {}
         )
         critic_explanation = (
-            state.get("signals_critiques", {}).get(signal_type, {}).get("explanation")
+            state.get("signals_critiques", {}).get("follow_up", {}).get(signal_type)
         )
 
         user_content += USER_INPUT_PROMPT["followup_analysis_signals_extension"].format(
@@ -477,14 +526,108 @@ class LLMFactory:
 
         return LLMFactory._initialize_llm(config)
 
+    def _create_follow_up_rag(state: State) -> Any:
+        model_config = LLMFactory._get_model_config(state, "rag")
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["followup_rag"],
+            task_type=TaskType.FOLLOWUP_RAG,
+            structured_output=STRUCTURED_OUTPUTS["followup_rag"],
+            user_content=user_content,
+        )
+        return LLMFactory._initialize_llm(config)
+
+    def create_follow_up_corroboration(
+        state: State, core_fact: str, retrieved_articles: List[dict]
+    ) -> Any:
+        model_config = LLMFactory._get_model_config(state, "followup")
+        user_content = USER_INPUT_PROMPT["followup_corroboration"].format(
+            title=state["article_title"],
+            core_fact=core_fact,
+            retrieved_articles=json.dumps(retrieved_articles, indent=2),
+        )
+
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["followup_corroboration"],
+            task_type=TaskType.FOLLOWUP_CORROBORATION,
+            structured_output=STRUCTURED_OUTPUTS["followup_corroboration"],
+            user_content=user_content,
+        )
+        return LLMFactory._initialize_llm(config)
+
+    def create_claim_extractor(
+        state: State,
+    ) -> Any:
+        model_config = LLMFactory._get_model_config(state, "followup")
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["followup_claim_extractor"],
+            task_type=TaskType.FOLLOWUP_CLAIM_EXTRACTOR,
+            structured_output=STRUCTURED_OUTPUTS["followup_claim_extractor"],
+            user_content=user_content,
+        )
+        return LLMFactory._initialize_llm(config)
+
+    def create_claim_verification(state: State, claims: List[dict]) -> Any:
+        model_config = LLMFactory._get_model_config(state, "followup")
+        user_content = USER_INPUT_PROMPT["followup_claim_verification"].format(
+            claims_list=json.dumps(claims, indent=2),
+        )
+
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["followup_claim_verification"],
+            task_type=TaskType.FOLLOWUP_CLAIM_VERIFICATION,
+            structured_output=STRUCTURED_OUTPUTS["followup_claim_verification"],
+            user_content=user_content,
+        )
+        return LLMFactory._initialize_llm(config)
+
+    def _create_feature_selector(state: State):
+        model_config = LLMFactory._get_model_config(state, "critic")
+        user_content = USER_INPUT_PROMPT["base_inputs"].format(
+            title=state["article_title"],
+            content=state["article_content"],
+        )
+        credibility_signals = state.get("credibility_signals", "No signals found")
+        critic = state.get("signals_critiques", "No critiques found")
+        followup_analysis = state.get(
+            "followup_signals_analysis", "No followup analysis found"
+        )
+
+        user_content += USER_INPUT_PROMPT["feature_selector_extension"].format(
+            signals_list=json.dumps(credibility_signals, indent=2),
+            critic_notes=json.dumps(critic, indent=2),
+            followup_analysis=json.dumps(followup_analysis, indent=2),
+        )
+
+        config = LLMConfig.from_model_config(
+            model_config,
+            task_prompt=TASK_PROMPTS["feature_selector"],
+            task_type=TaskType.FEATURE_SELECTOR,
+            structured_output=STRUCTURED_OUTPUTS["feature_selector"],
+            user_content=user_content,
+        )
+        return LLMFactory._initialize_llm(config)
+
     @staticmethod
     def _parse_classification(content: str):
-        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
-        fence = re.match(
-            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
-        )
-        if fence:
-            content = fence.group(1)  # keep only the inner JSON
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
         try:
             data = json.loads(content)
 
@@ -504,12 +647,12 @@ class LLMFactory:
 
     @staticmethod
     def _parse_critic(content: str):
-        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
-        fence = re.match(
-            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
-        )
-        if fence:
-            content = fence.group(1)  # keep only the inner JSON
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
         try:
             data = json.loads(content)
 
@@ -528,12 +671,12 @@ class LLMFactory:
 
     @staticmethod
     def _parse_signals_critic(content: str):
-        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
-        fence = re.match(
-            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
-        )
-        if fence:
-            content = fence.group(1)  # keep only the inner JSON
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
         try:
             critic_output = json.loads(content)
 
@@ -544,9 +687,9 @@ class LLMFactory:
             if not all(
                 key in critic_output.keys()
                 for key in [
-                    "reliable_signals",
-                    "overall_extraction_trust",
-                    "followup_signals",
+                    "keep",
+                    "follow_up",
+                    "overall_trust",
                     "critic_notes",
                 ]
             ):
@@ -563,27 +706,32 @@ class LLMFactory:
 
     @staticmethod
     def _parse_signal(content: str) -> SignalResult:
-        # Matches a leading ``` or ```json (any capitalisation) and the trailing ```
-        fence = re.match(
-            r"^\s*```(?:json)?\s*\n([\s\S]*?)\n\s*```\s*$", content, flags=re.IGNORECASE
-        )
-        if fence:
-            content = fence.group(1)  # keep only the inner JSON
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
+
         try:
             data = json.loads(content)
-            # Check if it has "label", "confidence", "explanation" keys
-            if all(
-                key in data
+            missing_keys = [
+                key
                 for key in ["label", "confidence", "explanation", "article_excerpts"]
-            ):
-                # If label is an int
-                if isinstance(data["label"], int):
-                    return {
-                        "label": data["label"],
-                        "article_excerpts": data["article_excerpts"],
-                        "confidence": data["confidence"],
-                        "explanation": data["explanation"],
-                    }
+                if key not in data
+            ]
+            # Check if it has "label", "confidence", "explanation" keys
+            if missing_keys:
+                print("Failed to parse content due to missing keys", missing_keys)
+                return None
+
+            else:
+                return {
+                    "label": data["label"],
+                    "article_excerpts": data["article_excerpts"],
+                    "confidence": data["confidence"],
+                    "explanation": data["explanation"],
+                }
 
         except json.JSONDecodeError:
             # If it isn't valid JSON
@@ -618,6 +766,136 @@ class LLMFactory:
                     return None
 
             return {"signals": signals}
+
+        except json.JSONDecodeError:
+            print("Failed to parse content due to faulty JSON", content)
+            return None
+
+    def _parse_rag(content: str) -> dict:
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
+        try:
+            data = json.loads(content)
+            missing_keys = [key for key in ("core_fact", "queries") if key not in data]
+            if missing_keys:
+                print("Failed to parse content due to missing keys", missing_keys)
+                return None
+            return data
+
+        except json.JSONDecodeError:
+            print("Failed to parse content due to faulty JSON", content)
+            return None
+
+    def _parse_corroboration(content: str) -> dict:
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
+        try:
+            data = json.loads(content)
+            missing_keys = [
+                key
+                for key in (
+                    "corroborating_articles",
+                    "reputable_corroboration_of_source",
+                    "explanation",
+                )
+                if key not in data
+            ]
+            if missing_keys:
+                print("Failed to parse content due to missing keys", missing_keys)
+                return None
+            return data
+
+        except json.JSONDecodeError:
+            print("Failed to parse content due to faulty JSON", content)
+            return None
+
+    @staticmethod
+    def _parse_claim_extractor(content: str) -> dict:
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
+        try:
+            data = json.loads(content)
+
+            if not isinstance(data, list):
+                print("Failed to parse content due to not being a list")
+                return None
+            else:
+                # Check each claim has required fields
+                for claim in data:
+                    missing_keys = [
+                        key
+                        for key in (
+                            "claim",
+                            "importance",
+                            "evidence",
+                        )
+                        if key not in claim
+                    ]
+                    if missing_keys:
+                        print(
+                            "Failed to parse content due to missing keys", missing_keys
+                        )
+                        return None
+            return data
+
+        except json.JSONDecodeError:
+            print("Failed to parse content due to faulty JSON", content)
+            return None
+
+    @staticmethod
+    def _parse_claim_verification(content: str) -> dict:
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
+        try:
+            data = json.loads(content)
+            missing_keys = [
+                key
+                for key in (
+                    "claims",
+                    "explicitly_unverified_claims",
+                    "explanation",
+                )
+                if key not in data
+            ]
+            if missing_keys:
+                print("Failed to parse content due to missing keys", missing_keys)
+                return None
+            return data
+
+        except json.JSONDecodeError:
+            print("Failed to parse content due to faulty JSON", content)
+            return None
+
+    def _parse_feature_selector(content: str) -> dict:
+        # only match non-scratch content
+        content = SCRATCH_RE.sub("", content).strip()
+        # check for injection json formatting instructions by LLM
+        m = FENCE_RE.match(content)
+        if m:
+            content = m.group(1).strip()
+        try:
+            data = json.loads(content)
+            missing_keys = [key for key in ("signals",) if key not in data]
+            if missing_keys:
+                print("Failed to parse content due to missing keys", missing_keys)
+                return None
+            return data
 
         except json.JSONDecodeError:
             print("Failed to parse content due to faulty JSON", content)
@@ -670,6 +948,16 @@ class LLMFactory:
                     parsed = LLMFactory._parse_signals_critic(content)
                 elif config.task_type == TaskType.FOLLOWUP_ANALYSIS:
                     parsed = LLMFactory._parse_signal(content)
+                elif config.task_type == TaskType.FOLLOWUP_RAG:
+                    parsed = LLMFactory._parse_rag(content)
+                elif config.task_type == TaskType.FOLLOWUP_CORROBORATION:
+                    parsed = LLMFactory._parse_corroboration(content)
+                elif config.task_type == TaskType.FEATURE_SELECTOR:
+                    parsed = LLMFactory._parse_feature_selector(content)
+                elif config.task_type == TaskType.FOLLOWUP_CLAIM_EXTRACTOR:
+                    parsed = LLMFactory._parse_claim_extractor(content)
+                elif config.task_type == TaskType.FOLLOWUP_CLAIM_VERIFICATION:
+                    parsed = LLMFactory._parse_claim_verification(content)
                 else:
                     raise ValueError(f"Unknown task type: {config.task_type}")
 

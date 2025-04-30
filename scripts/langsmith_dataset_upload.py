@@ -32,11 +32,6 @@ def upload_dataset(dataset_info: dict, dataset_manager: LangsmithDatasetManager)
     print(f"Loading dataset {name} into memory")
     df = load_csv_as_dataframe(transformed_file_path)
     df = df[dataset_info["input_keys"] + dataset_info["output_keys"]]
-    size_mb = df.memory_usage(deep=True).sum() / 1e6
-    if size_mb > 20:
-        raise RuntimeError(
-            f"Dataset too large ({size_mb:.2f}MB). LangSmith max is 20MB."
-        )
 
     print(f"Uploading dataset {name} into LangSmith")
     dataset_manager.upload_dataset(

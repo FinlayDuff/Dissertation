@@ -18,7 +18,13 @@ from core.llm_factory import LLMFactory
 from core.state import State
 from config.signals import CREDIBILITY_SIGNALS
 from utils.langchain.llm_model_selector import retry_on_api_exceptions
-from core.followup_analysis_tools import FOLLOWUP_TOOLS
+from core.followup_analysis_tools import FOLLOWUP_TOOLS, Classifier, TitleClassifier
+from core.rag import (
+    retrieve_from_search,
+    remove_exact_matching_results,
+    remove_credibility_sources,
+    retrieve_from_news,
+)
 
 
 class MisinformationDetection:
@@ -207,14 +213,12 @@ class MisinformationDetection:
         Returns:
             str: State with updated follow-up analysis results
         """
-        followup_signals = state.get("signals_critiques", {}).get("followup_signals", [])
+        followup_signals = state.get("signals_critiques", {}).get("follow_up", [])
 
         followup_results = {}
         for signal_name in followup_signals:
             # Only process signals if they have a valid follow-up tool configured.
-            if (
-                signal_name in FOLLOWUP_TOOLS
-            ):
+            if signal_name in FOLLOWUP_TOOLS:
                 if self.verbose:
                     print(
                         f"Running followup analysis on credibility signal: {signal_name}"
@@ -257,4 +261,140 @@ class MisinformationDetection:
         if topic is None:
             raise ValueError("Topic classification failed.")
         state["topic"] = topic
+        return state
+
+    def followup_classifier(self, state: State) -> State:
+        followup_signals = state.get("signals_critiques", {}).get("follow_up", [])
+        classifier_based = [
+            signal_name
+            for signal_name in followup_signals
+            if isinstance(
+                FOLLOWUP_TOOLS.get(signal_name, {}).get("method"),
+                (Classifier, TitleClassifier),
+            )
+        ]
+        results = {}
+        for signal_name in classifier_based:
+            tool = FOLLOWUP_TOOLS[signal_name]["method"]
+            results[signal_name] = tool(state)
+        if "followup_signals_analysis" not in state:
+            state["followup_signals_analysis"] = {}
+        state["followup_signals_analysis"].update(results)
+        return state
+
+    def followup_llm(self, state: State) -> State:
+        followup_signals = state.get("signals_critiques", {}).get("follow_up", [])
+        llm_based = [
+            signal_name
+            for signal_name in followup_signals
+            if FOLLOWUP_TOOLS.get(signal_name, {}).get("method") == "llm"
+        ]
+
+        results = {}
+        for signal_name in llm_based:
+            if signal_name == "external_corroboration":
+                results[signal_name] = self.corroboration_rag_chain(state)
+            elif signal_name == "explicitly_unverified_claims":
+                results[signal_name] = self.explicitly_unverified_claims_chain(state)
+            else:
+                results[signal_name] = self.basic_llm_followup(state, signal_name)
+
+        if "followup_signals_analysis" not in state:
+            state["followup_signals_analysis"] = {}
+        state["followup_signals_analysis"].update(results)
+        return state
+
+    def basic_llm_followup(self, state: State, signal_name: str) -> State:
+        state["current_signal"] = signal_name
+        llm = LLMFactory.create_for_node("followup_analysis", state)
+        response = llm.invoke()
+
+        state["messages"] = [response.raw_content]
+        if response.parsed_content:
+            response.parsed_content["analysis_type"] = "llm"
+            return response.parsed_content
+
+    def corroboration_rag_chain(self, state: State) -> State:
+
+        # First, we need to summarize the article content and generate search queries.
+        # This is done using the "followup_rag" LLM.
+        llm = LLMFactory.create_for_node("followup_rag", state)
+        response = llm.invoke()
+        if response.parsed_content:
+            core_fact = response.parsed_content.get("core_fact", "")
+            search_queries = response.parsed_content.get("queries", [])
+
+            # Now we can use the summary and search queries to retrieve relevant articles.
+            retrieved_articles = retrieve_from_news(queries=search_queries)
+
+            # Filter out near-exact matches to the original article.
+            filtered_articles = remove_exact_matching_results(
+                title=state["article_title"],
+                start=state["article_content"][:200],
+                results=retrieved_articles,
+            )
+
+            filtered_articles = remove_credibility_sources(filtered_articles)
+
+            # Finally, we can use the summary and retrieved articles to perform the follow-up analysis.
+            # This is done using the "followup_corroboration" LLM.
+            llm = LLMFactory.create_follow_up_corroboration(
+                state, core_fact=core_fact, retrieved_articles=filtered_articles
+            )
+            response = llm.invoke()
+            if response.parsed_content:
+                response.parsed_content["analysis_type"] = "RAG_chain_of_thought"
+                return response.parsed_content
+
+    def feature_selector(self, state: State) -> State:
+        """
+        Use an LLM to read the full set of signals, critiques, follow-ups,
+        extractor trust, topic, and a snippet of the article, and then OUTPUT
+        a *condensed* JSON containing only:
+        - article.title
+        - article.snippet
+        - topic
+        - extractor_trust
+        - a shortlist of the top 3-5 signals (with label, polarity, relevance, one-line reason)
+        - any follow-ups the LLM deems critical
+        """
+        llm = LLMFactory.create_for_node("feature_selector", state)
+        response = llm.invoke()
+        if response.parsed_content:
+            state["feature_selection"] = response.parsed_content
+        return state
+
+    def explicitly_unverified_claims_chain(self, state: State) -> State:
+        """
+        Use the LLM to analyze the credibility of sources in the article.
+        """
+        llm = LLMFactory.create_claim_extractor(state)
+        response = llm.invoke()
+        if response.parsed_content:
+            claims = response.parsed_content
+            for claim in claims:
+                retrieved_articles = retrieve_from_search(queries=claim["claim"])
+                filtered_articles = remove_exact_matching_results(
+                    title=state["article_title"],
+                    start=state["article_content"][:200],
+                    results=retrieved_articles,
+                )
+                filtered_articles = remove_credibility_sources(filtered_articles)
+
+                claim["retreived_articles"] = filtered_articles
+
+            llm = LLMFactory.create_claim_verification(state, claim)
+            response = llm.invoke()
+            if response.parsed_content:
+                response.parsed_content["analysis_type"] = "RAG_chain_of_thought"
+                return response.parsed_content
+
+    def credible_sources(self, state: State) -> State:
+        """
+        Use the LLM to analyze the credibility of sources in the article.
+        """
+        llm = LLMFactory.create_source_extraction("credible_sources", state)
+        response = llm.invoke()
+        if response.parsed_content:
+            state["credible_sources"] = response.parsed_content
         return state

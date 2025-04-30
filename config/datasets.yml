@@ -58,3 +58,34 @@ datasets:
     input_keys: ["article_title", "article_content"]
     output_keys: ["label"]
     total_samples: 100
+
+  - name: "isot"
+    description: "ISOT news dataset of misinformation"
+    path : "/data/raw/ISOTFakeNews.csv"
+    transform: "isot"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    chunk_size: 100
+
+  - name: "isot_100"
+    description: "ISOT news dataset of misinformation"
+    path : "/data/raw/ISOTFakeNews.csv"
+    transform: "isot"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 100
+
+  - name: "covid_fake_news"
+    description: "COVID 19 fake news dataset"
+    path: "/data/raw/covid_fake_news.csv"
+    transform: "covid_fake_news"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+
+  - name: "covid_fake_news_100"
+    description: "COVID 19 fake news dataset"
+    path: "/data/raw/covid_fake_news.csv"
+    transform: "covid_fake_news"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 100

@@ -31,6 +31,21 @@ def consistent_results_parser(data, chunk_number, dataset_name, experiment_id) -
             else {}
         )
 
+        # Get classification prompt safely with default empty list
+        classification_prompt = run.get("outputs", {}).get("classification_prompt", [])
+
+        # Only try to access prompt contents if we have enough elements
+        system_content = (
+            classification_prompt[0]["content"]
+            if len(classification_prompt) > 0
+            else ""
+        )
+        user_content = (
+            classification_prompt[1]["content"]
+            if len(classification_prompt) > 1
+            else ""
+        )
+
         run_data = {
             "experiment_name": data.get("experiment_name"),
             "chunk": chunk_number,
@@ -53,22 +68,16 @@ def consistent_results_parser(data, chunk_number, dataset_name, experiment_id) -
             "captured_signals_critiques": run.get("outputs", {}).get(
                 "signals_critiques"
             ),
-            "classification_prompt_system": run.get("outputs", {}).get(
-                "classification_prompt"
-            )[0]["content"],
-            "classification_prompt_user": run.get("outputs", {}).get(
-                "classification_prompt"
-            )[1]["content"],
+            "follow_up_signals_analysis": run.get("outputs", {}).get(
+                "followup_signals_analysis"
+            ),
+            "feature_selection": run.get("outputs", {}).get("feature_selection"),
+            "classification_prompt_system": system_content,
+            "classification_prompt_user": user_content,
             "classification_prompt_system_content_length": len(
-                enc.encode(
-                    run.get("outputs", {}).get("classification_prompt")[0]["content"]
-                )
+                enc.encode(system_content)
             ),
-            "classification_prompt_user_content_length": len(
-                enc.encode(
-                    run.get("outputs", {}).get("classification_prompt")[1]["content"]
-                )
-            ),
+            "classification_prompt_user_content_length": len(enc.encode(user_content)),
             "topic": run.get("outputs", {}).get("topic"),
         }
         all_runs.append(run_data)
@@ -200,13 +209,6 @@ def analyze_experiments(verbose: bool = False) -> pd.DataFrame:
             #     ),
             #     axis=1,
             # )
-
-            df["system_content_length"] = df["classification_prompt_system"].apply(
-                lambda x: len(enc.encode(x))
-            )
-            df["user_content_length"] = df["classification_prompt_user"].apply(
-                lambda x: len(enc.encode(x))
-            )
 
             df.dropna(subset=["actual", "prediction"], inplace=True)
 

@@ -1,4 +1,8 @@
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import (
+    pipeline,
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+)
 import os
 from typing import Callable, Dict
 from core.state import State
@@ -49,7 +53,6 @@ MODEL_CONFIG = load_model_config()
 
 
 class Classifier:
-    _thread_local = threading.local()
 
     def __init__(self, signal_name: str):
         self.logger = logging.getLogger(f"{__name__}.{signal_name}")
@@ -58,6 +61,8 @@ class Classifier:
         self.model_config = MODEL_CONFIG.get(signal_name)
         # Create a per-instance lock to serialize pipeline calls per thread
         self._model_lock = threading.Lock()
+        self._thread_local = threading.local()
+
         self._load_model()
         self._create_pipeline()
 
@@ -73,6 +78,7 @@ class Classifier:
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_config["name"],
                 local_files_only=True,
+                use_fast=False,
             )
 
             self.logger.debug(f"Loading model for {self.model_config['name']}")
@@ -123,11 +129,16 @@ class Classifier:
             return_tensors=None,
         )
 
+        input_ids_list = inputs["input_ids"]
+        # If we got a single list → wrap it in another list
+        if isinstance(input_ids_list[0], int):
+            input_ids_list = [input_ids_list]
+
         chunks = [
-            self.tokenizer.decode(input_ids, skip_special_tokens=True)
-            for input_ids in inputs["input_ids"]
+            self.tokenizer.decode(ids, skip_special_tokens=True)
+            for ids in input_ids_list
         ]
-        chunk_lengths = [len(input_ids) for input_ids in inputs["input_ids"]]
+        chunk_lengths = [len(ids) for ids in input_ids_list]
         self.logger.debug(f"Split text into {len(chunks)} chunks")
 
         self.logger.debug("Running predictions on chunks")
@@ -236,7 +247,7 @@ FOLLOWUP_TOOLS: Dict[str, Callable[[State], Dict]] = {
         "description": "An LLM prompted to reclassify the credibility signal",
     },
     "expert_citation": {
-        "method": "llm",
+        "method": "LLM",
         "description": "An LLM prompted to reclassify the credibility signal",
     },
     "impoliteness": {

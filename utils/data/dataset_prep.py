@@ -1,7 +1,7 @@
 from utils.data.csv_parsing import load_csv_as_dataframe
 import os
 import pandas as pd
-from utils.constants import veracity_dict, misinformation_dict
+from utils.constants import veracity_dict, misinformation_dict, fake_real_label_dict
 
 
 def extract_few_shot_examples(df, label_col, text_col, n_per_class=2):
@@ -94,6 +94,7 @@ def transform_fakes_dataset(
     print("Transforming FA-KES")
     df = load_csv_as_dataframe(dataset_path)
     df["label"] = df["labels"]
+    df = df[["article_title", "article_content", "label"]]
     return transform_dataset(
         df=df,
         text_column="article_content",
@@ -114,6 +115,7 @@ def tranform_recovery_news_dataset(
     df["label"] = df["reliability"].astype(int)
     df["article_title"] = df["title"]
     df["article_content"] = df["body_text"]
+    df = df[["article_title", "article_content", "label"]]
     return transform_dataset(
         df=df,
         text_column="article_content",
@@ -132,10 +134,51 @@ def transform_politifact_dataset(
     df["label"] = df["verdict"].apply(lambda x: veracity_dict[x])
     df["article_title"] = ""
     df["article_content"] = df["statement"]
+    df = df[["article_title", "article_content", "label"]]
     return transform_dataset(
         df=df,
         text_column="article_content",
         label_column="label",
         dataset_name="politifact",
+        total_samples=total_samples,
+    )
+
+
+def transform_isot_dataset(
+    dataset_path,
+    total_samples=None,
+):
+    print("Transforming isot")
+    df = load_csv_as_dataframe(dataset_path)
+    df.dropna(subset=["title", "text", "label"], inplace=True)
+    df["article_title"] = df["title"]
+    df["article_content"] = df["text"]
+    df["label"] = df["label"].apply(lambda x: fake_real_label_dict[x])
+    df = df[["article_title", "article_content", "label"]]
+    return transform_dataset(
+        df=df,
+        text_column="article_content",
+        label_column="label",
+        dataset_name="isot",
+        total_samples=total_samples,
+    )
+
+
+def transform_covid_fake_news(
+    dataset_path,
+    total_samples=None,
+):
+    print("Transforming covid fake news")
+    df = load_csv_as_dataframe(dataset_path)
+    df.dropna(subset=["title", "text", "label"], inplace=True)
+    df["article_title"] = df["title"]
+    df["article_content"] = df["text"]
+    df["label"] = df["label"]
+    df = df[["article_title", "article_content", "label"]]
+    return transform_dataset(
+        df=df,
+        text_column="article_content",
+        label_column="label",
+        dataset_name="covid_fake_news",
         total_samples=total_samples,
     )

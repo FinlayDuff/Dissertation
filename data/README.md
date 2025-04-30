@@ -19,3 +19,7 @@ The dataset can be accessed [here](https://zenodo.org/records/2607278)
 > - reliability - reliability label of the news article (1 = reliable, 0 = unreliable).
 
 The dataset can be accessed [here](https://github.com/apurvamulay/ReCOVery)
+
+
+## Fake News - Covid 19 
+Link to dataset [here] (https://data.mendeley.com/datasets/zwfdmp5syg/1)

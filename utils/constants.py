@@ -7,6 +7,7 @@ veracity_dict = {
     "false": 0,
     "pants-fire": 0,
 }
+fake_real_label_dict = {"Fake": 0, "Real": 1}
 
 
 POLARITY = {"POSITIVE": 1.0, "NEGATIVE": -1.0, "WEAK_NEGATIVE": -0.5}

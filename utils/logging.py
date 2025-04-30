@@ -3,6 +3,10 @@ import logging.config
 import os
 from pathlib import Path
 from datetime import datetime
+from loguru import logger
+
+logger.remove()  # remove default handler
+logger.add(lambda *_: None, level="WARNING")  # keep ≥ WARNING only
 
 
 def setup_logging(
@@ -17,11 +21,15 @@ def setup_logging(
         app_name: Name of the application (used for log files)
     """
     # Configure third-party library logging first
-    logging.getLogger("transformers").setLevel(logging.ERROR)
-    logging.getLogger("openai").setLevel(logging.ERROR)
-    logging.getLogger("httpx").setLevel(logging.ERROR)
-    logging.getLogger("langchain").setLevel(logging.ERROR)
-    logging.getLogger("langsmith").setLevel(logging.ERROR)
+    logging.getLogger("transformers").setLevel(logging.WARNING)
+    logging.getLogger("openai").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("langchain").setLevel(logging.WARNING)
+    logging.getLogger("langsmith").setLevel(logging.WARNING)
+    logging.getLogger("duckduckgo_search").setLevel(logging.WARNING)
+    # 2) Silence any underlying HTTP logs you don’t care about
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     # This handles pesky print statements
     os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 

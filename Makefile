@@ -1,10 +1,13 @@
-.PHONY: install upload_langsmith_dataset upload_langsmith_dataset_clean download_hugging_face_models
+.PHONY: install setup_spacy upload_langsmith_dataset upload_langsmith_dataset_clean download_hugging_face_models
 
-setup: install upload_langsmith_dataset_clean download_hugging_face_models
+setup: install setup_spacy upload_langsmith_dataset_clean download_hugging_face_models
 
 install:
 	echo "Installing dependencies. This may take a while..."
 	poetry install
+
+setup_spacy:
+	poetry run python -m spacy download en_core_web_sm
 
 upload_langsmith_dataset:
 	poetry run python -m scripts.langsmith_dataset_upload

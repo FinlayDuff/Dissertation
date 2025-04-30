@@ -35,6 +35,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 from openai import APIConnectionError, RateLimitError
 import httpx
 import logging
+from duckduckgo_search.duckduckgo_search import RatelimitException
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,7 @@ def retry_on_api_exceptions(
                             RateLimitError,
                             APIConnectionError,
                             httpx.ConnectError,
+                            RatelimitException,
                         ),
                     )
 
