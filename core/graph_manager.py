@@ -322,6 +322,7 @@ class GraphManager:
             "condensed_signals": example.get("condensed_signals"),
             "few_shot": example.get("few_shot"),
             "few_shot_examples": example.get("few_shot_examples"),
+            "use_rag": example.get("use_rag", True),
         }
 
         final_state = self.graph.invoke(initial_state)

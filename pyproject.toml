@@ -33,6 +33,7 @@ yake = "^0.4.8"
 pytextrank = "^3.3.0"
 pyppeteer = "^2.0.0"
 loguru = "^0.7.3"
+statsmodels = "^0.14.4"
 
 
 [tool.poetry.group.dev.dependencies]

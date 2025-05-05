@@ -162,6 +162,7 @@ class Experiment:
             ),
             "few_shot": self._experiment_config.get("few_shot"),
             "few_shot_examples": self._few_shot_examples,
+            "use_rag": self._experiment_config.get("signals", {}).get("use_rag",True),
         }
         return enriched_example
 
@@ -312,6 +313,7 @@ class Experiment:
             "use_bulk_signals",
             "few_shot",
             "few_shot_examples",
+            "use_rag",
         }
         return [
             {

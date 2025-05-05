@@ -1,12 +1,18 @@
 TASK_PROMPTS = {
     "zero_shot_classification": """
-### ROLE & TASK
-You are an expert in spotting misinformation in news articles.
-Your job is to decide whether the article is **Credible (1)** or **Fake (0)**, estimate a probability that your decision is correct and provide a reason.
+### ROLE
+CLASSIFIER: You are an expert at classifying articles as REAL or FAKE.
+
+### INPUT
+You receive (a) ARTICLE and ARTICLE TITLE
 
 ### STEPS
-1. First read the ARTICLE. Note any verifiable factual errors.
-2. Think about your classification and then output exactly the JSON below.
+1. First read the ARTICLE.
+2. Classify the article as either REAL or FAKE.
+3. How certain are you of your answer?
+4. Provide a rigorous, bullet pointed explanation for your answer.
+5. Output **only** this JSON, wrapped in a ```json fence```, **and nothing else outside**:
+
     """,
     "few_shot_classification": """
 ### ROLE & TASK
@@ -27,18 +33,18 @@ inside an HTML comment called <!--scratch-->.
 
 ### INPUT
 You receive (a) ARTICLE and ARTICLE TITLE and (b) CREDIBILITY SIGNAL classifications from an extractor.
-Each credibility signal classification includes:
+Each CREDIBILITY SIGNAL includes:
+- question: the question the signal is asking
 - label: whether the signal is present (TRUE/FALSE)
-- polarity: whether the presence of the signal makes it more credible (POSITIVE) or less credible (NEGATIVE)
 - explanation: reasoning for the extractor's classification
 - confidence: How certain the extractor is in its classification ("UNCERTAIN|FAIRLY CERTAIN|CERTAIN")
 
-### TASK STEPS
 1. Work step-by-step **inside** a <!--scratch--> block:
-    a. First read the ARTICLE and attempt to classify the article.
-    b. Then, consult the provided CREDIBILITY SIGNAL classifications
-    c. Weigh the polarity, confidence, reasoning and label of each signal and combine that with your own reasoning to classify the article as either REAL or FAKE.
-    d. Referencing the data used in your reasoning, provide a highly rigorous, bullet pointed explanation for you answer.
+    a. First read the ARTICLE create an initial classification of the article (REAL|FAKE)
+    b. Then, read the CREDIBILITY SIGNAL's and intepret the importance of each signal as it relates to the article classification, by weighing the confidence, explanation and label of each signal.
+    c. Combine this information with your initial classification.
+    d. Determine your *final* classification for the article with an associated confidence (UNCERTAIN|FAIRLY CERTAIN|CERTAIN).
+    e. Summarise your scratch reasoning and provide a highly rigorous, bullet pointed explanation for you answer.
 2. Output **only** this JSON, wrapped in a ```json fence```, **and nothing else outside**:
 
     """,
@@ -149,6 +155,7 @@ For each signal:
     "signal_classification_critic": """
 ### ROLE
 CRITIC — quality-control gate between extractor and final classifier.
+You task is to evaluate the credibility signals extracted from the article and decide which ones to keep, drop or follow-up on.
 
 ### INPUT
 - ARTICLE_TOPIC  
@@ -165,8 +172,8 @@ For each signal:
 2. Based on the topic of the article, assign the relevance of a credibility signal: "HIGH"/"MEDIUM"/"LOW"
 
 3. Decide the pipeline action 
-   KEEP         if `quality = "EXCELLENT"`   OR (`quality = "OK"`  AND `relevance is not "LOW"`)  
-   FOLLOW_UP    if `relevance = "HIGH" or "MEDIUM"`  AND `quality is not "EXCELLENT"` 
+   KEEP         if `quality = "EXCELLENT"` OR (`quality = "OK"`  AND `relevance is not "LOW"`)  
+   FOLLOW_UP    if `relevance = "HIGH"`  AND `quality is not "EXCELLENT"` 
    DROP         if `relevance = "LOW"`   AND `quality is not "EXCELLENT"`
 4. Output **only** this JSON, wrapped in a ```json fence```, **and nothing else outside**:
 
@@ -210,9 +217,9 @@ Given ARTICLE and TITLE:
 1. Extract the **core fact** as a 3-item string:
    "subject - action/claim - key detail (number/date/location)"
 2. Produce **3 query variants** that combine:
-   • subject + action + key detail (verbatim)
-   • subject + action + key detail (synonyms) 
-   • subject + key detail in quotes.
+   - subject + action + key detail (verbatim)
+   - subject + action + key detail (synonyms) 
+   - subject + key detail in quotes.
 3. Output **only** this JSON, wrapped in a ```json fence```, **and nothing else outside**:
 
     """,

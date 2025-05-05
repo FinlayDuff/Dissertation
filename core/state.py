@@ -53,3 +53,6 @@ class State(TypedDict):
     feature_selection: Annotated[
         Optional[Dict[str, Any]], "Features selected for the model"
     ]
+    use_rag: Annotated[
+        Optional[str], "Whether to use the RAG chain"
+    ]

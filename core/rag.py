@@ -3,6 +3,9 @@ from sentence_transformers import SentenceTransformer
 import numpy as np
 from typing import List
 from utils.langchain.llm_model_selector import retry_on_api_exceptions
+import logging
+
+logging.getLogger("duckduckgo_search.DDGS").setLevel(logging.WARNING)
 
 EMB = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -25,7 +28,6 @@ BANNED_DOMAINS = [
 
 @retry_on_api_exceptions()
 def retrieve_from_news(queries, k_per_query=10):
-    from duckduckgo_search import DDGS
 
     hits = []
     with DDGS() as ddgs:

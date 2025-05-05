@@ -150,14 +150,15 @@ def transform_isot_dataset(
 ):
     print("Transforming isot")
     df = load_csv_as_dataframe(dataset_path)
-    df.dropna(subset=["title", "text", "label"], inplace=True)
+    df.dropna(subset=["title", "text", "label","subject"], inplace=True)
     df["article_title"] = df["title"]
     df["article_content"] = df["text"]
     df["label"] = df["label"].apply(lambda x: fake_real_label_dict[x])
-    df = df[["article_title", "article_content", "label"]]
-    return transform_dataset(
+    df = df[["article_title", "article_content", "label","subject"]]
+    return transform_dataset_multi_split(
         df=df,
         text_column="article_content",
+        subject_column="subject",
         label_column="label",
         dataset_name="isot",
         total_samples=total_samples,
@@ -182,3 +183,58 @@ def transform_covid_fake_news(
         dataset_name="covid_fake_news",
         total_samples=total_samples,
     )
+
+
+def balanced_sample_by_label_and_subject(
+    df: pd.DataFrame, label_column: str, subject_column: str, total_samples: int
+) -> pd.DataFrame:
+    group_sizes = df.groupby([label_column, subject_column]).size()
+    valid_groups = group_sizes[group_sizes > 0].index.tolist()
+
+    num_groups = len(valid_groups)
+    samples_per_group = total_samples // num_groups
+
+    balanced_df = pd.DataFrame()
+
+    for group in valid_groups:
+        group_df = df[(df[label_column] == group[0]) & (df[subject_column] == group[1])]
+        n_samples = min(samples_per_group, len(group_df))
+        balanced_df = pd.concat(
+            [balanced_df, group_df.sample(n=n_samples, random_state=42)]
+        )
+
+    return balanced_df.sample(frac=1, random_state=42).reset_index(drop=True)
+
+
+def transform_dataset_multi_split(
+    df: pd.DataFrame,
+    text_column: str,
+    label_column: str,
+    subject_column: str,
+    dataset_name: str,
+    total_samples: int = 2000,
+):
+    transform_dataset_name = f"{dataset_name}_{total_samples}"
+
+    df[text_column] = df[text_column].apply(lambda x: x.strip().replace("\n", " "))
+
+    # Few-shot block extraction
+    df, few_shot_block = extract_few_shot_examples(df, label_column, text_column)
+    few_shot_file_path = os.path.join("data/fewshot", f"{transform_dataset_name}.txt")
+    os.makedirs(os.path.dirname(few_shot_file_path), exist_ok=True)
+    with open(few_shot_file_path, "w", encoding="utf-8") as f:
+        f.write(few_shot_block)
+    print(f"[INFO] Few-shot block saved to: {few_shot_file_path}")
+
+    # Balanced sampling
+    if total_samples:
+        df = balanced_sample_by_label_and_subject(
+            df, label_column, subject_column, total_samples
+        )
+
+    file_path = os.path.join("data/transformed", f"{transform_dataset_name}.csv")
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    df.to_csv(file_path, index=False)
+    print(f"[INFO] Saved transformed dataset to: {file_path}")
+
+    return file_path

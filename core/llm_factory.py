@@ -301,8 +301,8 @@ class LLMFactory:
 
         signals_data_for_classification = {
             signal_name: {
+                "question": signal_questions.get(signal_name, {}).get("question"),
                 "label": signal_data["label"],
-                "polarity": signal_questions.get(signal_name, {}).get("polarity"),
                 "confidence": signal_data["confidence"],
                 "explanation": signal_data["explanation"],
             }

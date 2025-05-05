@@ -3,10 +3,6 @@ import logging.config
 import os
 from pathlib import Path
 from datetime import datetime
-from loguru import logger
-
-logger.remove()  # remove default handler
-logger.add(lambda *_: None, level="WARNING")  # keep ≥ WARNING only
 
 
 def setup_logging(
@@ -27,6 +23,8 @@ def setup_logging(
     logging.getLogger("langchain").setLevel(logging.WARNING)
     logging.getLogger("langsmith").setLevel(logging.WARNING)
     logging.getLogger("duckduckgo_search").setLevel(logging.WARNING)
+    logging.getLogger("duckduckgo_search.DDGS").setLevel(logging.WARNING)
+
     # 2) Silence any underlying HTTP logs you don’t care about
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)

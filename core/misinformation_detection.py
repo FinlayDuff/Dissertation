@@ -284,6 +284,7 @@ class MisinformationDetection:
 
     def followup_llm(self, state: State) -> State:
         followup_signals = state.get("signals_critiques", {}).get("follow_up", [])
+        use_rag = state.get("use_rag", True)
         llm_based = [
             signal_name
             for signal_name in followup_signals
@@ -292,10 +293,18 @@ class MisinformationDetection:
 
         results = {}
         for signal_name in llm_based:
-            if signal_name == "external_corroboration":
-                results[signal_name] = self.corroboration_rag_chain(state)
-            elif signal_name == "explicitly_unverified_claims":
-                results[signal_name] = self.explicitly_unverified_claims_chain(state)
+            if use_rag:
+                if (
+                    signal_name == "external_corroboration"
+                    or signal_name == "reported_by_other_sources"
+                ):
+                    results[signal_name] = self.corroboration_rag_chain(state)
+                elif signal_name == "explicitly_unverified_claims":
+                    results[signal_name] = self.explicitly_unverified_claims_chain(
+                        state
+                    )
+                else:
+                    results[signal_name] = self.basic_llm_followup(state, signal_name)
             else:
                 results[signal_name] = self.basic_llm_followup(state, signal_name)
 
@@ -316,7 +325,7 @@ class MisinformationDetection:
 
     def corroboration_rag_chain(self, state: State) -> State:
 
-        # First, we need to summarize the article content and generate search queries.
+        # First, we need to extract the main fact of the article and generate search queries for it.
         # This is done using the "followup_rag" LLM.
         llm = LLMFactory.create_for_node("followup_rag", state)
         response = llm.invoke()
@@ -366,7 +375,7 @@ class MisinformationDetection:
 
     def explicitly_unverified_claims_chain(self, state: State) -> State:
         """
-        Use the LLM to analyze the credibility of sources in the article.
+        Use the LLM to analyze the explicitly unverified claims in the article.
         """
         llm = LLMFactory.create_claim_extractor(state)
         response = llm.invoke()
@@ -389,12 +398,12 @@ class MisinformationDetection:
                 response.parsed_content["analysis_type"] = "RAG_chain_of_thought"
                 return response.parsed_content
 
-    def credible_sources(self, state: State) -> State:
-        """
-        Use the LLM to analyze the credibility of sources in the article.
-        """
-        llm = LLMFactory.create_source_extraction("credible_sources", state)
-        response = llm.invoke()
-        if response.parsed_content:
-            state["credible_sources"] = response.parsed_content
-        return state
+    # def credible_sources(self, state: State) -> State:
+    #     """
+    #     Use the LLM to analyze the credibility of sources in the article.
+    #     """
+    #     llm = LLMFactory.create_source_extraction("credible_sources", state)
+    #     response = llm.invoke()
+    #     if response.parsed_content:
+    #         state["credible_sources"] = response.parsed_content
+    #     return state

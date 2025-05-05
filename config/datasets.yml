@@ -75,6 +75,14 @@ datasets:
     output_keys: ["label"]
     total_samples: 100
 
+  - name: "isot_2000"
+    description: "Subset ISOT news dataset of misinformation"
+    path : "/data/raw/ISOTFakeNews.csv"
+    transform: "isot"
+    input_keys: ["article_title", "article_content"]
+    output_keys: ["label"]
+    total_samples: 2000
+
   - name: "covid_fake_news"
     description: "COVID 19 fake news dataset"
     path: "/data/raw/covid_fake_news.csv"
